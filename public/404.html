@@ -9,7 +9,7 @@
       // This script handles routing for SPAs on GitHub Pages
       // It redirects all 404 pages to index.html with the path preserved
 
-      var pathSegmentsToKeep = 1; // Keep 1 segment for /repo-name/
+      var pathSegmentsToKeep = 0; // Site is served from domain root (custom domain), not /repo-name/
 
       var l = window.location;
       l.replace(
