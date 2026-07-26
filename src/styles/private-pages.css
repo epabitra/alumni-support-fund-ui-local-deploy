@@ -1,0 +1,141 @@
+/* ============================================
+   PRIVATE PAGES - FULL WIDTH, FRIENDLY UX
+   Matches public pages: gold + slate, mobile-first responsive
+   ============================================ */
+
+/* Containers */
+.private-layout,
+.dashboard-container,
+.admin-container,
+.service-center-container,
+.verifier-container {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--slate-50, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Full-width main - comfortable reading width */
+.private-main,
+.dashboard-content,
+.admin-main,
+.service-center-main,
+.verifier-main {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .private-main,
+  .dashboard-content,
+  .admin-main,
+  .service-center-main,
+  .verifier-main {
+    padding: 2rem clamp(1.25rem, 4vw, 2.5rem);
+  }
+}
+
+.payment-main,
+.fund-main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .payment-main,
+  .fund-main {
+    padding: 2rem clamp(1.25rem, 4vw, 2.5rem);
+  }
+}
+
+/* Title block - friendly typography */
+.private-page-title-block {
+  margin-bottom: 1.5rem;
+}
+
+.private-page-title-block h1 {
+  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
+  font-size: clamp(1.375rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.private-page-title-block p {
+  font-size: 0.9375rem;
+  color: var(--slate-600, #475569);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.dashboard-container main.dashboard-content,
+.admin-container main.admin-main,
+.service-center-container main.service-center-main,
+.verifier-container main.verifier-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.private-page-title-block a[href] {
+  color: var(--brand-600, #b8860b);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.private-page-title-block a[href]:hover {
+  color: var(--brand-700, #996c00);
+}
+
+/* Table scroll wrapper - touch-friendly on mobile */
+.table-scroll-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+
+/* ============================================
+   RESPONSIVE - TABLET & MOBILE (stack layout, friendly spacing)
+   ============================================ */
+@media (max-width: 768px) {
+  .private-page-title-block {
+    margin-bottom: 1.25rem;
+  }
+
+  .private-page-title-block h1 {
+    font-size: 1.375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .private-main,
+  .dashboard-content,
+  .admin-main,
+  .service-center-main,
+  .verifier-main,
+  .payment-main,
+  .fund-main {
+    padding: 1rem 0.75rem;
+  }
+
+  .private-page-title-block h1 {
+    font-size: 1.25rem;
+  }
+
+  .private-page-title-block p {
+    font-size: 0.875rem;
+  }
+}

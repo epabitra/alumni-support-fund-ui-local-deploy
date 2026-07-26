@@ -1,0 +1,589 @@
+/* Payment & Fund pages - Alumni Support Fund (gold theme, full width) */
+
+.payment-container,
+.fund-container {
+  min-height: 100vh;
+  background: var(--surface-muted, #f8fafc);
+}
+
+.payment-main,
+.fund-main {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 4vw, 2.5rem);
+  box-sizing: border-box;
+}
+
+.payment-card {
+  background: var(--surface, #ffffff);
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border, #e2e8f0);
+  padding: 1.25rem 1rem;
+  margin-bottom: 1.25rem;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .payment-card {
+    padding: 1.5rem clamp(1.25rem, 4vw, 2rem);
+  }
+}
+
+.payment-card:hover {
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.08);
+  border-color: var(--brand-200, #f9ecc9);
+}
+
+.payment-card h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 640px) {
+  .payment-card h2 {
+    font-size: 1.25rem;
+  }
+}
+
+.payment-form .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.payment-form label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.375rem;
+}
+
+.payment-form input,
+.payment-form textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: #334155;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .payment-form input,
+  .payment-form textarea {
+    font-size: 1rem;
+  }
+}
+
+.payment-form input:focus,
+.payment-form textarea:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12);
+  background: #ffffff;
+}
+
+.payment-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.payment-form .form-hint {
+  font-size: 0.8125rem;
+  color: var(--ink-500, #64748b);
+  margin-top: 0.25rem;
+}
+
+/* Contribution breakdown: amount you pay, gateway charge, net to fund */
+.contribution-breakdown {
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.contribution-breakdown-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--ink-600, #475569);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
+}
+
+.contribution-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  font-size: 0.9375rem;
+}
+
+.contribution-breakdown-row.contribution-breakdown-you .contribution-breakdown-value {
+  font-weight: 600;
+  color: #334155;
+}
+
+.contribution-breakdown-row.contribution-breakdown-charge .contribution-breakdown-value {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.contribution-breakdown-row.contribution-breakdown-net {
+  border-top: 1px solid var(--border, #e2e8f0);
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+}
+
+.contribution-breakdown-row.contribution-breakdown-net .contribution-breakdown-value {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #996c00;
+}
+
+.contribution-breakdown-label {
+  color: var(--ink-600, #475569);
+}
+
+.contribution-breakdown-note {
+  font-size: 0.8125rem;
+  color: var(--ink-500, #64748b);
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border, #e2e8f0);
+  line-height: 1.45;
+}
+
+.payment-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 0.5rem;
+  min-height: 48px;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.25);
+}
+
+@media (min-width: 640px) {
+  .payment-submit {
+    width: auto;
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+.payment-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.35);
+  background: linear-gradient(135deg, #b8860b 0%, #d4af37 100%);
+  color: #ffffff;
+}
+
+.payment-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.payment-message {
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.payment-message.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.payment-message.success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.payment-message.info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+/* Contribution summary - stack on mobile, grid on larger */
+.contribution-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 480px) {
+  .contribution-summary {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .contribution-summary {
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+}
+
+.contribution-stat {
+  background: var(--surface, #fff);
+  border-radius: 0.875rem;
+  padding: 1.25rem 1rem;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.contribution-stat:hover {
+  border-color: var(--brand-200, #f9ecc9);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.08);
+}
+
+.contribution-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-500, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.contribution-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.contribution-stat-value.amount {
+  color: #996c00;
+  font-weight: 700;
+}
+
+/* History table - wrap in .table-scroll-wrap on pages for horizontal scroll on mobile */
+.payment-history-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.payment-history-table th,
+.payment-history-table td {
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+@media (min-width: 640px) {
+  .payment-history-table {
+    font-size: 0.9375rem;
+  }
+
+  .payment-history-table th,
+  .payment-history-table td {
+    padding: 0.75rem 1rem;
+  }
+}
+
+.payment-history-table th {
+  font-weight: 600;
+  color: #64748b;
+  background: var(--surface-muted, #f8fafc);
+}
+
+/* Keep date and key columns on one line on small screens (table scrolls horizontally) */
+.payment-history-table th:first-child,
+.payment-history-table td:first-child,
+.payment-history-table .payment-date-cell {
+  white-space: nowrap;
+  min-width: 8rem;
+}
+
+/* Contributor column - allow wrapping for masked email */
+.payment-history-table td:first-child {
+  max-width: 12rem;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.payment-history-table td:first-child small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.contributor-name {
+  font-weight: 500;
+  color: #475569;
+}
+
+.contributor-email {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.3;
+  font-family: 'Courier New', monospace;
+}
+
+.amount-cell {
+  font-weight: 600;
+  color: #996c00;
+  white-space: nowrap;
+}
+
+.transaction-id-cell {
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  font-size: 0.8125rem;
+  color: #64748b;
+  word-break: break-all;
+  max-width: 14rem;
+}
+
+.payment-history-table td:nth-child(3),
+.payment-history-table th:nth-child(3) {
+  white-space: nowrap;
+}
+
+.payment-history-table td:nth-child(5),
+.payment-history-table th:nth-child(5),
+.payment-history-table td:nth-child(6),
+.payment-history-table th:nth-child(6) {
+  white-space: nowrap;
+}
+
+.payment-receipt-btn {
+  background: none;
+  border: none;
+  color: var(--brand-600, #b8860b);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  text-decoration: underline;
+}
+
+.payment-receipt-btn:hover {
+  color: var(--brand-700, #996c00);
+}
+
+.payment-history-table tr:hover td {
+  background: #fafafa;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.success { background: #dcfce7; color: #166534; }
+.status-badge.failed { background: #fef2f2; color: #b91c1c; }
+.status-badge.pending { background: #fef9c3; color: #854d0e; }
+.status-badge.cancelled { background: #f1f5f9; color: #475569; }
+
+/* Fund balance hero */
+.fund-balance-hero {
+  background: linear-gradient(135deg, #7a5700 0%, #b8860b 50%, #d4af37 100%);
+  color: #fff;
+  padding: 1.5rem 1rem;
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .fund-balance-hero {
+    padding: 2rem clamp(1.5rem, 4vw, 2.5rem);
+    margin-bottom: 2rem;
+  }
+}
+
+.fund-balance-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse 100% 60% at 50% -10%, rgba(255,255,255,0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.fund-balance-hero p {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+.fund-balance-hero h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+@media (min-width: 640px) {
+  .fund-balance-hero h2 {
+    font-size: 0.9375rem;
+  }
+}
+
+.fund-balance-hero .balance-amount {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.98);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* Pagination - stack on small mobile */
+.pagination-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border, #e2e8f0);
+}
+
+@media (min-width: 480px) {
+  .pagination-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+.pagination-bar .pagination-info {
+  font-size: 0.875rem;
+  color: var(--ink-500, #64748b);
+}
+
+.pagination-btns {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+@media (min-width: 480px) {
+  .pagination-btns {
+    justify-content: flex-end;
+  }
+}
+
+.pagination-btns button {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-height: 44px;
+  min-width: 90px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.pagination-btns button:hover:not(:disabled) {
+  background: var(--surface-muted, #f8fafc);
+  border-color: var(--brand-400, #f1c40f);
+}
+
+.pagination-btns button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Footer link strip on payment/fund pages - wrap on mobile */
+.payment-main > p:last-of-type,
+.fund-main > p:last-of-type {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 1rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.payment-main > p:last-of-type a,
+.fund-main > p:last-of-type a {
+  white-space: nowrap;
+}
+
+/* Empty state - friendly spacing */
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--ink-500, #64748b);
+  font-size: 0.9375rem;
+}
+
+@media (min-width: 640px) {
+  .empty-state {
+    padding: 3rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+.empty-state-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  opacity: 0.6;
+}
+
+@media (min-width: 640px) {
+  .empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+}
+

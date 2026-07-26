@@ -1,0 +1,214 @@
+/* Donation receipt – screen and print (brand gold + clear structure) */
+
+.receipt-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fefbf3;
+  color: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.5;
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.receipt-org {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #7a5700;
+  letter-spacing: 0.02em;
+}
+
+.receipt-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.75rem;
+  color: #1a1a1a;
+}
+
+.receipt-header-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #b8860b 0%, #d4af37 100%);
+  border-radius: 2px;
+  width: 80px;
+  margin: 0 auto;
+}
+
+.receipt-thank-you {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1.25rem;
+  text-align: center;
+}
+
+.receipt-details {
+  margin-bottom: 1.25rem;
+}
+
+.receipt-detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.receipt-detail-row:last-child {
+  border-bottom: none;
+}
+
+.receipt-label {
+  font-size: 0.875rem;
+  color: #4a5568;
+  flex: 0 0 40%;
+  min-width: 120px;
+}
+
+.receipt-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-align: right;
+}
+
+.receipt-amount-row .receipt-value {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #7a5700;
+}
+
+.receipt-amount-words .receipt-value {
+  font-style: italic;
+  text-align: right;
+}
+
+.receipt-status {
+  text-transform: capitalize;
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.receipt-message-block {
+  background: #fdf6e3;
+  border-left: 4px solid #d4af37;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.receipt-message-block p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #2d3748;
+  line-height: 1.6;
+}
+
+.receipt-footer {
+  font-size: 0.8125rem;
+  color: #4a5568;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.receipt-footer p {
+  margin: 0.25rem 0;
+}
+
+.receipt-generated-at {
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+/* Actions (Print / Download) – hidden when printing */
+.receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.receipt-actions .btn {
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+
+.receipt-actions .btn-print {
+  background: linear-gradient(135deg, #b8860b 0%, #d4af37 100%);
+  color: #fff;
+}
+
+.receipt-actions .btn-print:hover {
+  background: linear-gradient(135deg, #996c00 0%, #b8860b 100%);
+}
+
+.receipt-actions .btn-download {
+  background: #fff;
+  color: #7a5700;
+  border: 2px solid #d4af37;
+}
+
+.receipt-actions .btn-download:hover {
+  background: #fefbf3;
+}
+
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-content,
+  #receipt-content * {
+    visibility: visible;
+  }
+
+  #receipt-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1.5cm;
+    background: #fff;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .receipt-card {
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .receipt-header-bar {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .receipt-message-block {
+    background: #fdf6e3;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .receipt-actions,
+  .no-print {
+    display: none !important;
+  }
+}
