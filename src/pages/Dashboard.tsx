@@ -187,6 +187,24 @@ const Dashboard: React.FC = () => {
                   </svg>
                   <span>Student Selection</span>
                 </Link>
+                <Link to="/admin/scholarship-payments" className="workspace-link">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>Scholarship Payments</span>
+                </Link>
+                <Link to="/verifier/pending" className="workspace-link">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Verify Applications</span>
+                </Link>
+                <Link to="/service-center/register-student" className="workspace-link">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  <span>Register Student</span>
+                </Link>
                 <Link to="/admin/reviews" className="workspace-link">
                   <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -264,17 +282,17 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Recent Transactions Section - after all other sections */}
+        {/* My Recent Contributions section - after all other sections */}
         <div className="dashboard-recent-transactions">
           <div className="section-header-inline">
-            <h2 className="section-title-inline">Recent Transactions</h2>
+            <h2 className="section-title-inline">My Recent Contributions</h2>
             <Link to="/my-contributions" className="section-link-inline">View all →</Link>
           </div>
           
           {loadingTransactions ? (
             <div className="transactions-loading">
               <div className="spinner-small"></div>
-              <span>Loading transactions...</span>
+              <span>Loading your contributions...</span>
             </div>
           ) : recentTransactions.length === 0 ? (
             <div className="transactions-empty">

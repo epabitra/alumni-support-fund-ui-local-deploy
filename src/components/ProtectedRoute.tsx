@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import LoadingSpinner from './LoadingSpinner';
+import { ROLE_ADMIN } from '../app/Constants';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,9 +26,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <LoadingSpinner />;
   }
 
-  // Check role-based access if requiredRole is specified
+  // Check role-based access if requiredRole is specified; admin manages the whole workflow, so has every role's access
   if (requiredRole) {
-    const hasRole = currentUser.authorities?.includes(requiredRole);
+    const hasRole = currentUser.authorities?.includes(requiredRole) || currentUser.authorities?.includes(ROLE_ADMIN);
     if (!hasRole) {
       // Redirect to dashboard if user doesn't have required role
       return <Navigate to="/dashboard" replace />;

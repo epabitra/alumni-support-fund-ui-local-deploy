@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { fetchStudentImageBlobUrl } from '../app/modules/scholarship/core/_requests';
 import type { StudentImageDTO } from '../app/modules/scholarship/core/_models';
+import ImageViewer from './ImageViewer';
 
 interface StudentDetailImagesProps {
   images?: StudentImageDTO[];
@@ -45,77 +45,8 @@ const StudentDetailImages: React.FC<StudentDetailImagesProps> = ({
     };
   }, [images?.length, images?.map((i) => i.id).join(',')]);
 
-  const handleDownload = (url: string, index: number) => {
-    const ext = (images?.[index]?.contentType?.split('/')[1]) || 'jpg';
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `student-photo-${index + 1}.${ext === 'jpeg' ? 'jpg' : ext}`;
-    a.click();
-  };
-
-  useEffect(() => {
-    const onEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxIndex(null);
-    };
-    if (lightboxIndex !== null) {
-      document.addEventListener('keydown', onEscape);
-      document.body.style.overflow = 'hidden';
-    }
-    return () => {
-      document.removeEventListener('keydown', onEscape);
-      document.body.style.overflow = '';
-    };
-  }, [lightboxIndex]);
-
   if (!images?.length) return null;
 
-  const lightboxUrl = lightboxIndex !== null && images[lightboxIndex]?.id
-    ? blobUrls[images[lightboxIndex].id!]
-    : null;
-
-  const lightboxNode =
-    lightboxIndex !== null && lightboxUrl ? (
-      <div
-        className="image-lightbox-overlay"
-        onClick={() => setLightboxIndex(null)}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Image preview"
-      >
-        <div className="image-lightbox-content" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            className="image-lightbox-close"
-            aria-label="Close"
-            onClick={() => setLightboxIndex(null)}
-          >
-            ×
-          </button>
-          <img
-            src={lightboxUrl}
-            alt="Student"
-            className="image-lightbox-img"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <div className="image-lightbox-actions">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => handleDownload(lightboxUrl, lightboxIndex)}
-            >
-              Download
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setLightboxIndex(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    ) : null;
 
   return (
     <>
@@ -144,11 +75,19 @@ const StudentDetailImages: React.FC<StudentDetailImagesProps> = ({
                 )
               )}
             </div>
-            <p className="student-images-hint">Click a photo to view full size or download.</p>
+            <p className="student-images-hint">Click a photo to zoom in or download.</p>
           </span>
         </div>
       </div>
-      {lightboxNode && createPortal(lightboxNode, document.body)}
+      {lightboxIndex !== null && (
+        <ImageViewer
+          images={images}
+          startIndex={lightboxIndex}
+          title="Student photo"
+          downloadName="student-photo"
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </>
   );
 };

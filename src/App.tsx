@@ -29,6 +29,7 @@ import AdminSelection from './pages/admin/AdminSelection';
 import AdminReviews from './pages/admin/AdminReviews';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminAddPayment from './pages/admin/AdminAddPayment';
+import AdminScholarshipPayments from './pages/admin/AdminScholarshipPayments';
 
 // Service Center pages
 import RegisterStudent from './pages/service-center/RegisterStudent';
@@ -178,6 +179,14 @@ function App() {
         element={
           <ProtectedRoute requiredRole={ROLE_ADMIN}>
             <AdminAddPayment />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/scholarship-payments"
+        element={
+          <ProtectedRoute requiredRole={ROLE_ADMIN}>
+            <AdminScholarshipPayments />
           </ProtectedRoute>
         }
       />

@@ -46,9 +46,28 @@ export function getMyHistory(page: number = 0, size: number = 10): Promise<PageR
 }
 
 /** Get public payment history with masked user info (paginated). Authenticated. */
-export function getPublicHistory(page: number = 0, size: number = 10): Promise<PageResponse<PublicPaymentHistoryDTO>> {
+/** Filters for the public contributions table; dates are yyyy-MM-dd (inclusive) */
+export interface PublicHistoryFilters {
+  search?: string;
+  from?: string;
+  to?: string;
+  /** UPI, CARD, NETBANKING, WALLET, EMI or ADMIN */
+  method?: string;
+  sortBy?: 'date' | 'amount';
+  sortDir?: 'asc' | 'desc';
+}
+
+export function getPublicHistory(
+  page: number = 0,
+  size: number = 10,
+  filters: PublicHistoryFilters = {}
+): Promise<PageResponse<PublicPaymentHistoryDTO>> {
+  const params: Record<string, string | number> = { page, size };
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v != null && String(v).trim() !== '') params[k] = String(v).trim();
+  });
   return paymentAxios
-    .get<PageResponse<PublicPaymentHistoryDTO>>(`${PAYMENTS_BASE}/public-history`, { params: { page, size } })
+    .get<PageResponse<PublicPaymentHistoryDTO>>(`${PAYMENTS_BASE}/public-history`, { params })
     .then((response) => response.data);
 }
 

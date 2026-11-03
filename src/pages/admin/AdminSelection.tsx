@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getAllStudents, selectStudent } from '../../app/modules/scholarship/core/_requests';
 import { StudentDTO, StudentStatus } from '../../app/modules/scholarship/core/_models';
+import { getFundBalance } from '../../app/modules/payment/core/_requests';
+import ScholarshipPaymentModal, { formatINR, ScholarshipPaymentInput } from '../../components/ScholarshipPaymentModal';
 import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -20,10 +22,21 @@ const AdminSelection: React.FC = () => {
   const [success, setSuccess] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [studentToSelect, setStudentToSelect] = useState<StudentDTO | null>(null);
+  const [fundBalance, setFundBalance] = useState<number | null>(null);
 
   useEffect(() => {
     loadVerifiedStudents();
   }, [searchTerm]);
+
+  const loadFundBalance = async () => {
+    try {
+      const data = await getFundBalance();
+      setFundBalance(data.totalBalance);
+    } catch {
+      setFundBalance(null);
+    }
+  };
 
   const loadVerifiedStudents = async () => {
     try {
@@ -43,24 +56,36 @@ const AdminSelection: React.FC = () => {
     }
   };
 
-  const handleSelect = async (student: StudentDTO) => {
-    const atOrOverLimit = student.selectedCountInAcademicYear != null && student.selectedCountInAcademicYear >= MAX_SELECTION_PER_ACADEMIC_YEAR;
-    const confirmMessage = atOrOverLimit
-      ? `Maximum ${MAX_SELECTION_PER_ACADEMIC_YEAR} students have already been selected for academic year ${student.academicYear || 'this year'}. Do you want to select this student anyway?`
-      : 'Are you sure you want to select this student?';
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
+  const openSelectModal = (student: StudentDTO) => {
+    setError('');
+    setSuccess('');
+    setStudentToSelect(student);
+    loadFundBalance();
+  };
 
-    try {
-      setError('');
-      setSuccess('');
-      await selectStudent(student.id!);
-      setSuccess('Student selected successfully');
-      loadVerifiedStudents();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to select student');
-    }
+  const selectionLimitWarning = (student: StudentDTO): string | undefined => {
+    const atOrOverLimit = student.selectedCountInAcademicYear != null && student.selectedCountInAcademicYear >= MAX_SELECTION_PER_ACADEMIC_YEAR;
+    return atOrOverLimit
+      ? `Maximum ${MAX_SELECTION_PER_ACADEMIC_YEAR} students have already been selected for academic year ${student.academicYear || 'this year'}. You can still select this student.`
+      : undefined;
+  };
+
+  // Errors propagate to the modal, which shows them and stays open
+  const handleSelect = async ({ amount, remarks, paidOn, receipts }: ScholarshipPaymentInput) => {
+    if (!studentToSelect) return;
+    await selectStudent(
+      studentToSelect.id!,
+      amount > 0 ? { amount, remarks, paidOn } : { amount },
+      receipts
+    );
+    const name = studentToSelect.studentName;
+    setStudentToSelect(null);
+    setSuccess(
+      amount > 0
+        ? `${name} selected successfully. ${formatINR(amount)} paid from the fund.`
+        : `${name} selected successfully. No amount paid yet — you can pay later from Scholarship Payments.`
+    );
+    loadVerifiedStudents();
   };
 
   if (loading) {
@@ -109,7 +134,7 @@ const AdminSelection: React.FC = () => {
         </div>
 
         <div className="alert alert-info">
-          <strong>Selection Guidelines:</strong> Only verified students can be selected. There is a maximum limit per academic year. Review each student carefully before selection.
+          <strong>Selection Guidelines:</strong> Only verified students can be selected. There is a maximum limit per academic year. Review each student carefully before selection. While selecting, you can pay the full cost, part of it, or ₹0 now and pay the rest later from Scholarship Payments.
         </div>
 
         <div className="filters-container">
@@ -157,13 +182,15 @@ const AdminSelection: React.FC = () => {
                 <th>Annual Fees</th>
                 <th>Books Price</th>
                 <th>Extra Price</th>
+                <th>Travel Fees</th>
+                <th>Total Cost</th>
                 <th>Actions</th>
               </tr>
               </thead>
               <tbody>
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <td colSpan={12} style={{ textAlign: 'center', padding: '2rem' }}>
                     <div className="empty-state">
                       <div className="empty-state-icon">✅</div>
                       <h3>No verified students available</h3>
@@ -183,10 +210,12 @@ const AdminSelection: React.FC = () => {
                     <td>{formatFee(student.annualFees)}</td>
                     <td>{formatFee(student.booksPrice)}</td>
                     <td>{formatFee(student.extraPrice)}</td>
+                    <td>{formatFee(student.travelFees)}</td>
+                    <td><strong>{formatFee(student.totalCost)}</strong></td>
                     <td>
                       <button
                         className="btn btn-primary btn-sm"
-                        onClick={() => handleSelect(student)}
+                        onClick={() => openSelectModal(student)}
                       >
                         Select
                       </button>
@@ -198,6 +227,21 @@ const AdminSelection: React.FC = () => {
           </table>
           </div>
         </div>
+
+        {studentToSelect && (
+          <ScholarshipPaymentModal
+            title="Select student for scholarship"
+            studentName={`${studentToSelect.studentName} · Class ${studentToSelect.classLevel ?? '—'} · ${studentToSelect.schoolName ?? ''}`}
+            totalCost={studentToSelect.totalCost ?? 0}
+            totalPaid={0}
+            fundBalance={fundBalance}
+            allowZero
+            confirmLabel="Select student"
+            warning={selectionLimitWarning(studentToSelect)}
+            onSubmit={handleSelect}
+            onClose={() => setStudentToSelect(null)}
+          />
+        )}
       </main>
     </div>
   );

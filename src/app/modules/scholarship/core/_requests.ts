@@ -7,7 +7,11 @@ import {
   StudentDTO,
   StudentVerificationDTO,
   StudentRegistrationFormData,
-  PageResponse
+  PageResponse,
+  ScholarshipPaymentRequestDTO,
+  FeeUpdateRequestDTO,
+  ScholarshipPaymentDTO,
+  StudentScholarshipSummaryDTO
 } from './_models';
 
 // Setup axios instance for scholarship requests
@@ -139,8 +143,81 @@ export function getServiceCenterStudents(
   });
 }
 
-export function selectStudent(id: number) {
-  return scholarshipAxios.post<StudentDTO>(`${SCHOLARSHIP_BASE}/admin/students/${id}/select`);
+/** Multipart body: payment details as JSON part "data" plus receipt files as parts "receipts" */
+function paymentFormData(body: ScholarshipPaymentRequestDTO, receipts: File[] = []): FormData {
+  const formData = new FormData();
+  formData.append('data', new Blob([JSON.stringify(body)], { type: 'application/json' }));
+  receipts.forEach((file) => formData.append('receipts', file));
+  return formData;
+}
+
+/** Select a verified student; amount is what is paid from the fund now (0 = pay later). */
+export function selectStudent(id: number, body: ScholarshipPaymentRequestDTO, receipts: File[] = []) {
+  return scholarshipAxios.post<StudentDTO>(`${SCHOLARSHIP_BASE}/admin/students/${id}/select`, paymentFormData(body, receipts), {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+}
+
+/** Admin: total cost, paid, remaining and payment history of a student */
+export function getStudentScholarshipPayments(studentId: number) {
+  return scholarshipAxios
+    .get<StudentScholarshipSummaryDTO>(`${SCHOLARSHIP_BASE}/admin/students/${studentId}/scholarship-payments`)
+    .then((r) => r.data);
+}
+
+/** Any member: totals and payment history (purpose, dates, receipts) of a selected student */
+export function getSelectedStudentPayments(studentId: number) {
+  return scholarshipAxios
+    .get<StudentScholarshipSummaryDTO>(`${SCHOLARSHIP_BASE}/selected-students/${studentId}/payments`)
+    .then((r) => r.data);
+}
+
+/** Admin: pay an installment to a selected student */
+export function addStudentScholarshipPayment(studentId: number, body: ScholarshipPaymentRequestDTO, receipts: File[] = []) {
+  return scholarshipAxios
+    .post<StudentScholarshipSummaryDTO>(
+      `${SCHOLARSHIP_BASE}/admin/students/${studentId}/scholarship-payments`,
+      paymentFormData(body, receipts),
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    .then((r) => r.data);
+}
+
+/** Admin: attach receipts to an existing scholarship payment */
+export function addScholarshipPaymentReceipts(studentId: number, paymentId: number, receipts: File[]) {
+  const formData = new FormData();
+  receipts.forEach((file) => formData.append('receipts', file));
+  return scholarshipAxios
+    .post<StudentScholarshipSummaryDTO>(
+      `${SCHOLARSHIP_BASE}/admin/students/${studentId}/scholarship-payments/${paymentId}/receipts`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    .then((r) => r.data);
+}
+
+/** Admin: remove a wrongly uploaded receipt */
+export function removeScholarshipPaymentReceipt(studentId: number, paymentId: number, receiptId: number) {
+  return scholarshipAxios
+    .delete<StudentScholarshipSummaryDTO>(
+      `${SCHOLARSHIP_BASE}/admin/students/${studentId}/scholarship-payments/${paymentId}/receipts/${receiptId}`
+    )
+    .then((r) => r.data);
+}
+
+/** All scholarship payments to students, newest first (fund transparency). Authenticated. */
+export function getScholarshipPaymentHistory(
+  page: number = 0,
+  size: number = 10,
+  filters: { search?: string; from?: string; to?: string; sortBy?: 'date' | 'amount' | 'student'; sortDir?: 'asc' | 'desc' } = {}
+): Promise<PageResponse<ScholarshipPaymentDTO>> {
+  const params: Record<string, string | number> = { page, size };
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v != null && String(v).trim() !== '') params[k] = String(v).trim();
+  });
+  return scholarshipAxios
+    .get<PageResponse<ScholarshipPaymentDTO>>(`${SCHOLARSHIP_BASE}/selected-students/payments`, { params })
+    .then((r) => r.data);
 }
 
 // Service Center endpoints
@@ -171,7 +248,10 @@ export function uploadStudentImage(studentId: number, file: File, sortOrder: num
   );
 }
 
-/** Fetch student image as blob URL (for display with auth). Caller must revoke the URL when done. */
+/**
+ * Fetch an authenticated file (student image, payment receipt) as blob URL for display.
+ * Caller must revoke the URL when done.
+ */
 export async function fetchStudentImageBlobUrl(contentUrl: string | undefined): Promise<string> {
   if (!contentUrl) return '';
   const base = (API_URL || '').replace(/\/api\/?$/, '');
@@ -204,6 +284,29 @@ export function getPendingStudents(page: number = 0, size: number = 20, search?:
       } as PageResponse<StudentDTO>
     };
   });
+}
+
+/** Verifier / admin: verified and selected students (with paid / remaining) whose fees can be corrected */
+export function getVerifiedStudents(page: number = 0, size: number = 20, search?: string) {
+  const params: Record<string, string | number> = { page, size, sort: DEFAULT_SORT };
+  if (search != null && search.trim() !== '') params.search = search.trim();
+  return scholarshipAxios.get<StudentDTO[]>(`${SCHOLARSHIP_BASE}/verifier/students/verified`, { params }).then((response) => ({
+    ...response,
+    data: {
+      content: response.data,
+      totalElements: parseInt(response.headers['x-total-count'] || '0', 10),
+      totalPages: parseInt(response.headers['x-total-pages'] || '0', 10),
+      size: parseInt(response.headers['x-page-size'] || String(size), 10),
+      number: parseInt(response.headers['x-page-number'] || '0', 10)
+    } as PageResponse<StudentDTO>
+  }));
+}
+
+/** Verifier / admin: correct the fees of a verified or selected student (logged with the reason) */
+export function updateStudentFees(studentId: number, body: FeeUpdateRequestDTO) {
+  return scholarshipAxios
+    .put<StudentVerificationDTO>(`${SCHOLARSHIP_BASE}/verifier/students/${studentId}/fees`, body)
+    .then((r) => r.data);
 }
 
 export function verifyStudent(studentId: number, verification: StudentVerificationDTO) {

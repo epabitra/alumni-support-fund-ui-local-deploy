@@ -363,6 +363,18 @@
   white-space: nowrap;
 }
 
+.scholarship-purpose-cell {
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
+.scholarship-purpose-text {
+  font-size: 0.8125rem;
+  color: #334155;
+  margin-bottom: 0.375rem;
+  overflow-wrap: anywhere;
+}
+
 .transaction-id-cell {
   font-family: 'Courier New', Consolas, Monaco, monospace;
   font-size: 0.8125rem;
@@ -587,3 +599,28 @@
   }
 }
 
+
+.fund-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.fund-card-header h2 {
+  margin: 0;
+}
+
+.fund-card-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand-700, #996c00);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.fund-card-link:hover {
+  text-decoration: underline;
+}

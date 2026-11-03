@@ -1,0 +1,56 @@
+/*
+ * Popup layout shared by every modal (.modal-overlay > .modal-content).
+ * Several stylesheets define .modal-* rules; these selectors are more specific so this layout always wins:
+ * the header and footer stay visible and only the body scrolls, also when a <form> wraps body + footer.
+ */
+
+.modal-overlay > .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.modal-overlay > .modal-content > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.modal-overlay > .modal-content .modal-header,
+.modal-overlay > .modal-content .modal-footer {
+  flex-shrink: 0;
+}
+
+.modal-overlay > .modal-content .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fields never push the popup wider than the screen */
+.modal-overlay > .modal-content .form-group,
+.modal-overlay > .modal-content .form-input,
+.modal-overlay > .modal-content .form-select,
+.modal-overlay > .modal-content .form-textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.modal-overlay > .modal-content .fee-fields-grid,
+.modal-overlay > .modal-content .scholarship-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 480px) {
+  .modal-overlay > .modal-content .fee-fields-grid,
+  .modal-overlay > .modal-content .scholarship-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

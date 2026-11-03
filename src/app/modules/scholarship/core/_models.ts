@@ -54,8 +54,69 @@ export interface StudentDTO {
   annualFees?: number;
   booksPrice?: number;
   extraPrice?: number;
+  /** Travel to school (auto / rickshaw) */
+  travelFees?: number;
   /** Number already selected for this academic year; for selection limit warning */
   selectedCountInAcademicYear?: number;
+  /** Scholarship totals: sum of fees, paid from the fund so far, and remaining */
+  totalCost?: number;
+  totalPaid?: number;
+  remainingAmount?: number;
+}
+
+/** Body for selecting a student (amount may be 0) or paying an installment (amount > 0) */
+export interface ScholarshipPaymentRequestDTO {
+  amount: number;
+  /** Purpose of the payment; required when amount > 0 */
+  remarks?: string;
+  /** Date the payment was actually made (yyyy-MM-dd); defaults to today on the server */
+  paidOn?: string;
+}
+
+/** Proof document (school receipt) attached to a scholarship payment */
+export interface ScholarshipReceiptDTO {
+  id: number;
+  contentType: string;
+  fileSize?: number;
+  fileName?: string;
+  uploadedAt?: string;
+  /** URL path to load the file (e.g. /api/scholarship-receipts/{id}/content) */
+  contentUrl: string;
+}
+
+/** One scholarship payment made to a student, with the student's current totals */
+export interface ScholarshipPaymentDTO {
+  id: number;
+  studentId: number;
+  studentName?: string;
+  schoolName?: string;
+  classLevel?: number;
+  academicYear?: string;
+  amount: number;
+  /** Date the payment was actually made (yyyy-MM-dd) */
+  paidOn: string;
+  /** When the payment was recorded in the system (ISO timestamp) */
+  paymentDate: string;
+  /** Purpose of the payment */
+  remarks?: string;
+  receipts: ScholarshipReceiptDTO[];
+  /** Admin who paid; only in admin views */
+  paidByName?: string;
+  totalCost: number;
+  totalPaid: number;
+  remainingAmount: number;
+}
+
+/** A student's scholarship payment status and history */
+export interface StudentScholarshipSummaryDTO {
+  studentId: number;
+  studentName?: string;
+  totalCost: number;
+  totalPaid: number;
+  remainingAmount: number;
+  payments: ScholarshipPaymentDTO[];
+  /** Fee corrections made after verification, newest first */
+  feeChanges?: FeeChangeDTO[];
 }
 
 export interface StudentVerificationDTO {
@@ -73,6 +134,30 @@ export interface StudentVerificationDTO {
   annualFees?: number;
   booksPrice?: number;
   extraPrice?: number;
+  travelFees?: number;
+}
+
+/** Corrected fees of a verified / selected student; reason is required */
+export interface FeeUpdateRequestDTO {
+  joiningFees: number;
+  annualFees: number;
+  booksPrice: number;
+  extraPrice: number;
+  travelFees: number;
+  reason: string;
+}
+
+/** A fee correction made after verification */
+export interface FeeChangeDTO {
+  id: number;
+  changedAt: string;
+  /** e.g. "Joining fees: 5100.00 → 5300.00" */
+  changes: string;
+  oldTotal: number;
+  newTotal: number;
+  reason: string;
+  /** Who made the change; only in admin views */
+  changedByName?: string;
 }
 
 /** Default fee values per class level for verification form */

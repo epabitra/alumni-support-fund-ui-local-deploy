@@ -6,6 +6,7 @@ import { AuthProvider, AuthInit } from './app/modules/auth/core/Auth';
 import { setupAxios } from './app/modules/auth/core/setupAxios';
 import axios from 'axios';
 import './index.css';
+import './styles/modal-layout.css';
 
 // Setup axios interceptors
 setupAxios(axios);

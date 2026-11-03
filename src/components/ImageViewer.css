@@ -1,0 +1,111 @@
+/* Full-screen photo viewer with zoom; above every popup */
+
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+}
+
+.image-viewer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.image-viewer-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.image-viewer-title small {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.image-viewer-controls,
+.image-viewer-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.image-viewer-nav {
+  justify-content: center;
+  padding: 0.75rem 1rem;
+}
+
+.image-viewer-controls button,
+.image-viewer-nav button,
+.image-viewer-download {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(248, 250, 252, 0.3);
+  border-radius: 0.5rem;
+  background: rgba(248, 250, 252, 0.1);
+  color: #f8fafc;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.image-viewer-controls button:hover:not(:disabled),
+.image-viewer-nav button:hover:not(:disabled),
+.image-viewer-download:hover {
+  background: rgba(248, 250, 252, 0.22);
+}
+
+.image-viewer-controls button:disabled,
+.image-viewer-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.image-viewer-zoom {
+  min-width: 3.75rem !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.image-viewer-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  overscroll-behavior: contain;
+}
+
+.image-viewer-stage.zoomed {
+  cursor: grab;
+}
+
+.image-viewer-stage.zoomed:active {
+  cursor: grabbing;
+}
+
+/* margin:auto centres the photo but, unlike align/justify center, keeps every edge reachable when zoomed */
+.image-viewer-stage img {
+  margin: auto;
+  max-width: none;
+  flex-shrink: 0;
+  user-select: none;
+  background: #fff;
+}
+
+.image-viewer-message {
+  margin: auto;
+  opacity: 0.8;
+}

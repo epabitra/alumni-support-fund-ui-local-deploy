@@ -1,4 +1,4 @@
-/* Selected Students - card grid for all authenticated users */
+/* Selected Students: one full-width row per student, for all signed-in users */
 
 .selected-students-container {
   min-height: 100vh;
@@ -7,203 +7,417 @@
 
 .selected-students-main {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem clamp(1rem, 4vw, 2.5rem);
   box-sizing: border-box;
 }
 
-.selected-students-toolbar {
+/* Toolbar */
+.ss-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
 }
 
-.selected-students-toolbar .search-row {
-  flex: 1;
-  min-width: 200px;
+.ss-search {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 420px;
+  color: #94a3b8;
 }
 
-.selected-students-toolbar .form-input {
+.ss-search svg {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ss-search-input {
   width: 100%;
-  max-width: 320px;
-}
-
-.selected-students-count {
-  margin: 0;
-  color: var(--ink-500, #64748b);
+  height: 2.75rem;
+  padding: 0 0.875rem 0 2.625rem;
   font-size: 0.9375rem;
+  font-family: inherit;
+  color: #0f172a;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.625rem;
 }
 
-.selected-students-loading {
+.ss-search-input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+}
+
+.ss-count {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* List and card */
+.ss-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.ss-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.15s ease;
+}
+
+.ss-card:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.ss-card-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 1.25rem 1.5rem;
+  padding: 1.25rem 1.5rem;
+}
+
+/* Photo */
+.ss-photo {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  border-radius: 0.875rem;
+  overflow: hidden;
+}
+
+.ss-photo-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fbf3d9;
+  color: #7a5700;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ss-photo-btn {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: #f1f5f9;
+  cursor: zoom-in;
+}
+
+.ss-photo-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ss-photo-btn:focus-visible {
+  outline: 3px solid #d4af37;
+  outline-offset: 2px;
+}
+
+.ss-photo-zoom {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+  font-size: 1.25rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ss-photo-btn:hover .ss-photo-zoom,
+.ss-photo-btn:focus-visible .ss-photo-zoom {
+  opacity: 1;
+}
+
+/* Identity */
+.ss-identity {
+  min-width: 0;
+}
+
+.ss-name {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.ss-school {
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  color: #334155;
+  overflow-wrap: anywhere;
+}
+
+.ss-meta {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+/* Payment progress */
+.ss-progress {
+  min-width: 0;
+}
+
+.ss-progress-head,
+.ss-progress-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+.ss-progress-paid {
+  font-size: 0.875rem;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-progress-paid strong {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ss-status {
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ss-status.paid {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.ss-status.partial {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ss-status.unpaid {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ss-progress-track {
+  height: 0.5rem;
+  margin: 0.5rem 0 0.375rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.ss-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.ss-progress-fill.paid {
+  background: #16a34a;
+}
+
+.ss-progress-fill.partial,
+.ss-progress-fill.unpaid {
+  background: #d4af37;
+}
+
+.ss-progress-foot {
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Fee breakdown */
+.ss-fees {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ss-fee dt {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.ss-fee dd {
+  margin: 0.125rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-fee-total dd {
+  font-weight: 700;
+  color: #7a5700;
+}
+
+/* Footer */
+.ss-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.625rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ss-fees-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.ss-fees-toggle:hover {
+  color: #7a5700;
+}
+
+.ss-fees-toggle svg {
+  transition: transform 0.15s ease;
+}
+
+.ss-fees-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.ss-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* States */
+.ss-loading {
   display: flex;
   justify-content: center;
   padding: 3rem;
 }
 
-.selected-students-empty {
-  text-align: center;
+.ss-empty {
   padding: 3rem 2rem;
-  background: var(--surface, #fff);
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
 }
 
-.selected-students-empty .empty-icon {
-  font-size: 3rem;
-  margin-bottom: 0.75rem;
-  opacity: 0.7;
+.ss-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.selected-students-empty h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.25rem;
-  color: var(--ink-900, #0f172a);
-}
-
-.selected-students-empty p {
-  margin: 0;
-  color: var(--ink-500, #64748b);
-  font-size: 0.9375rem;
-}
-
-/* Card grid */
-.selected-students-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.selected-student-card {
-  background: var(--surface, #fff);
-  border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: box-shadow 0.2s;
-}
-
-.selected-student-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.selected-student-card-photo {
-  width: 100%;
-  aspect-ratio: 4/3;
-  background: var(--surface-muted, #f8fafc);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.selected-student-card-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.selected-student-card-photo-placeholder {
-  color: var(--ink-500, #64748b);
-}
-
-.selected-student-card-photo-placeholder .photo-placeholder-icon {
-  font-size: 3rem;
-  opacity: 0.6;
-}
-
-.selected-student-card-photo-placeholder .photo-loading {
-  font-size: 1.5rem;
-  opacity: 0.5;
-}
-
-.selected-student-card-body {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.selected-student-card-name {
-  margin: 0;
+.ss-empty h3 {
+  margin: 0 0 0.375rem;
   font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--ink-900, #0f172a);
-  line-height: 1.3;
+  color: #0f172a;
 }
 
-.selected-student-card-details {
+.ss-empty p {
   margin: 0;
-  display: grid;
-  gap: 0.375rem;
+  font-size: 0.9375rem;
+  color: #64748b;
 }
 
-.selected-student-card-details .detail-row {
+.ss-pagination {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.selected-student-card-details dt {
-  margin: 0;
-  font-weight: 500;
-  color: var(--ink-500, #64748b);
-}
-
-.selected-student-card-details dd {
-  margin: 0;
-  color: var(--ink-900, #0f172a);
-  text-align: right;
-}
-
-.selected-student-card-fees {
-  margin-top: 0.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border, #e2e8f0);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem 1rem;
-}
-
-.selected-student-card-fees .fee-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-}
-
-.selected-student-card-fees .fee-label {
-  color: var(--ink-500, #64748b);
-  font-weight: 500;
-}
-
-.selected-student-card-fees .fee-value {
-  color: var(--ink-900, #0f172a);
-  font-weight: 600;
-}
-
-.selected-students-pagination {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.selected-students-pagination .pagination-info {
-  font-size: 0.9375rem;
-  color: var(--ink-500, #64748b);
+.ss-pagination-info {
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
-@media (max-width: 640px) {
-  .selected-students-grid {
-    grid-template-columns: 1fr;
+/* Tablet: progress drops under the name */
+@media (max-width: 860px) {
+  .ss-card-main {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ss-progress {
+    grid-column: 1 / -1;
+  }
+
+  .ss-fees {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Phone */
+@media (max-width: 520px) {
+  .ss-card-main {
+    padding: 1rem;
+    gap: 0.875rem 1rem;
+  }
+
+  .ss-photo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .ss-photo-initials {
+    font-size: 1.25rem;
+  }
+
+  .ss-fees {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.875rem 1rem;
+  }
+
+  .ss-card-footer {
+    padding: 0.625rem 1rem 0.875rem;
+  }
+
+  .ss-actions,
+  .ss-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .ss-search {
+    max-width: none;
   }
 }

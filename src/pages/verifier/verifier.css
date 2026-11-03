@@ -1052,3 +1052,10 @@
     font-size: 1.125rem;
   }
 }
+
+.verifier-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}

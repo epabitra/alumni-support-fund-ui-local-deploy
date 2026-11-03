@@ -7,6 +7,7 @@ import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import StudentDetailImages from '../../components/StudentDetailImages';
+import VerifiedStudentsPanel from './VerifiedStudentsPanel';
 import '../verifier/verifier.css';
 
 function formatDoB(iso?: string): string {
@@ -41,6 +42,7 @@ const PendingVerifications: React.FC = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [tab, setTab] = useState<'pending' | 'verified'>('pending');
   const pageSize = 20;
 
   useEffect(() => {
@@ -77,7 +79,8 @@ const PendingVerifications: React.FC = () => {
           : schema.optional()
       ),
     booksPrice: Yup.number().min(0, 'Must be 0 or more').optional(),
-    extraPrice: Yup.number().min(0, 'Must be 0 or more').optional()
+    extraPrice: Yup.number().min(0, 'Must be 0 or more').optional(),
+    travelFees: Yup.number().min(0, 'Must be 0 or more').optional()
   });
 
   const formik = useFormik<StudentVerificationDTO>({
@@ -88,7 +91,8 @@ const PendingVerifications: React.FC = () => {
       joiningFees: 0,
       annualFees: 0,
       booksPrice: 0,
-      extraPrice: 0
+      extraPrice: 0,
+      travelFees: 0
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -99,7 +103,8 @@ const PendingVerifications: React.FC = () => {
         joiningFees: Number(values.joiningFees) || 0,
         annualFees: Number(values.annualFees) ?? 0,
         booksPrice: Number(values.booksPrice) || 0,
-        extraPrice: Number(values.extraPrice) || 0
+        extraPrice: Number(values.extraPrice) || 0,
+        travelFees: Number(values.travelFees) || 0
       };
       try {
         setError('');
@@ -126,7 +131,8 @@ const PendingVerifications: React.FC = () => {
         joiningFees: data?.joiningFees ?? 0,
         annualFees: data?.annualFees ?? 0,
         booksPrice: data?.booksPrice ?? 0,
-        extraPrice: data?.extraPrice ?? 0
+        extraPrice: data?.extraPrice ?? 0,
+        travelFees: 0
       });
     } catch {
       formik.setValues({
@@ -136,7 +142,8 @@ const PendingVerifications: React.FC = () => {
         joiningFees: 0,
         annualFees: 0,
         booksPrice: 0,
-        extraPrice: 0
+        extraPrice: 0,
+        travelFees: 0
       });
     }
   };
@@ -177,6 +184,31 @@ const PendingVerifications: React.FC = () => {
 
         {error && <div className="alert alert-danger">{error}</div>}
 
+        <div className="verifier-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'pending'}
+            className={tab === 'pending' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'}
+            onClick={() => setTab('pending')}
+          >
+            Pending verification
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'verified'}
+            className={tab === 'verified' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'}
+            onClick={() => setTab('verified')}
+          >
+            Verified &amp; selected (edit fees)
+          </button>
+        </div>
+
+        {tab === 'verified' ? (
+          <VerifiedStudentsPanel />
+        ) : (
+        <>
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-card-icon">⏳</div>
@@ -297,6 +329,8 @@ const PendingVerifications: React.FC = () => {
               Next
             </button>
           </div>
+        )}
+        </>
         )}
 
         {viewDetailsStudent && (
@@ -453,6 +487,22 @@ const PendingVerifications: React.FC = () => {
                       />
                       {formik.touched.extraPrice && formik.errors.extraPrice && (
                         <span className="field-error">{formik.errors.extraPrice}</span>
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Travel Fees (auto / rickshaw)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        name="travelFees"
+                        min={0}
+                        step={0.01}
+                        value={formik.values.travelFees ?? ''}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                      />
+                      {formik.touched.travelFees && formik.errors.travelFees && (
+                        <span className="field-error">{formik.errors.travelFees}</span>
                       )}
                     </div>
                   </div>
