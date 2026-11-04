@@ -1,9 +1,8 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
-import { getAuth } from '../app/modules/auth/core/AuthHelpers';
+import { fetchProfileImageBlobUrl } from '../app/modules/auth/core/_user_requests';
 import { ROLE_ADMIN, ROLE_VERIFIER, ROLE_SERVICE_CENTER, ROLE_AUDITOR, ROLE_USER } from '../app/Constants';
-import { GET_ACCOUNT_PROFILE_IMAGE } from '../app/Constants';
 import '../styles/dashboard.css';
 
 const SWIPE_THRESHOLD = 80;
@@ -178,20 +177,19 @@ const RoleBasedNav: React.FC = () => {
       setProfileImageUrl(null);
       return;
     }
-    const auth = getAuth();
-    if (!auth?.api_token) return;
-    fetch(GET_ACCOUNT_PROFILE_IMAGE, { headers: { Authorization: `Bearer ${auth.api_token}` } })
-      .then((r) => (r.ok ? r.blob() : null))
-      .then((blob) => {
-        if (blob) {
-          if (profileImageUrlRef.current) URL.revokeObjectURL(profileImageUrlRef.current);
-          const url = URL.createObjectURL(blob);
-          profileImageUrlRef.current = url;
-          setProfileImageUrl(url);
+    let cancelled = false;
+    fetchProfileImageBlobUrl()
+      .then((url) => {
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
         }
+        profileImageUrlRef.current = url;
+        setProfileImageUrl(url);
       })
-      .catch(() => {});
+      .catch(() => setProfileImageUrl(null));
     return () => {
+      cancelled = true;
       if (profileImageUrlRef.current) {
         URL.revokeObjectURL(profileImageUrlRef.current);
         profileImageUrlRef.current = null;

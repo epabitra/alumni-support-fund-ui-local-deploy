@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_URL, POST_CHANGE_PASSWORD, PUT_ACCOUNT_PROFILE, POST_ACCOUNT_PROFILE_IMAGE } from '../../../Constants';
+import { API_URL, POST_CHANGE_PASSWORD, PUT_ACCOUNT_PROFILE, POST_ACCOUNT_PROFILE_IMAGE, GET_ACCOUNT_PROFILE_IMAGE } from '../../../Constants';
 import { getAuth } from './AuthHelpers';
 import type { UserModel } from './_models';
 
@@ -91,6 +91,16 @@ export function changePassword(currentPassword: string, newPassword: string) {
 
 export function updateAccountProfile(firstName: string, lastName: string, revealDetailsInPublicHistory?: boolean) {
   return userAxios.put<UserModel>(PUT_ACCOUNT_PROFILE, { firstName, lastName, revealDetailsInPublicHistory });
+}
+
+/**
+ * The signed-in user's photo as a blob URL; the caller revokes it when done.
+ * Goes through userAxios because on the live site a plain fetch gets ngrok's warning page instead of the image.
+ */
+export async function fetchProfileImageBlobUrl(): Promise<string> {
+  const { data } = await userAxios.get<Blob>(GET_ACCOUNT_PROFILE_IMAGE, { responseType: 'blob' });
+  if (!data.type.startsWith('image/')) throw new Error('Profile image response was not an image');
+  return URL.createObjectURL(data);
 }
 
 export function uploadProfileImage(file: File) {

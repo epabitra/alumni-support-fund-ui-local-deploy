@@ -15,6 +15,8 @@ export type TransactionStatus = 'SUCCESS' | 'FAILED' | 'PENDING' | 'CANCELLED';
 export type PaymentMethod = 'UPI' | 'CARD' | 'NETBANKING' | 'WALLET' | 'EMI' | 'ADMIN';
 
 export interface CheckoutConfigDTO {
+  /** False until online payments are switched on */
+  paymentsEnabled: boolean;
   razorpayKeyId: string;
 }
 
@@ -84,6 +86,8 @@ export interface PublicPaymentHistoryDTO {
   /** When contributor chose to reveal details */
   fullName?: string;
   fullEmail?: string;
+  /** Only present when the contributor shows their details and has a photo */
+  profileImageUrl?: string;
   /** When contributor chose to keep details private */
   maskedName?: string;
   maskedEmail?: string;

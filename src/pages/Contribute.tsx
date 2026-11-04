@@ -24,6 +24,7 @@ const Contribute: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [checkoutKey, setCheckoutKey] = useState<string | null>(null);
+  const [paymentsEnabled, setPaymentsEnabled] = useState(true);
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>('');
@@ -44,13 +45,14 @@ const Contribute: React.FC = () => {
     getCheckoutConfig()
       .then((config) => {
         if (!cancelled) {
+          setPaymentsEnabled(config.paymentsEnabled);
           setCheckoutKey(config.razorpayKeyId);
           setConfigError(null);
         }
       })
       .catch((err: any) => {
         if (!cancelled) {
-          setConfigError(err.response?.data?.message || 'Unable to load payment configuration. Please try again.');
+          setConfigError(err.response?.data?.message || 'We could not load this page. Please check your connection and try again.');
         }
       })
       .finally(() => {
@@ -130,11 +132,41 @@ const Contribute: React.FC = () => {
       <div className="dashboard-container">
         <RoleBasedNav />
         <main className="dashboard-content">
-          <div className="payment-card">
-            <p className="payment-message error">{configError}</p>
-            <Link to="/dashboard" className="payment-submit" style={{ textDecoration: 'none' }}>
-              Back to Dashboard
-            </Link>
+          <div className="payment-card contribute-soon">
+            <div className="contribute-soon-icon" aria-hidden>⚠️</div>
+            <h1>Something went wrong</h1>
+            <p role="alert">{configError}</p>
+            <div className="contribute-soon-actions">
+              <button type="button" className="payment-submit" onClick={() => window.location.reload()}>Try again</button>
+              <Link to="/dashboard" className="contribute-soon-link">Back to Dashboard</Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!paymentsEnabled) {
+    return (
+      <div className="dashboard-container">
+        <RoleBasedNav />
+        <main className="dashboard-content">
+          <div className="payment-card contribute-soon">
+            <div className="contribute-soon-icon" aria-hidden>💛</div>
+            <span className="contribute-soon-badge">Coming soon</span>
+            <h1>Online contributions are opening soon</h1>
+            <p>
+              Thank you for wanting to support our students. We are finishing the setup of our secure payment
+              gateway, and you will be able to contribute online here once it is ready.
+            </p>
+            <div className="contribute-soon-note">
+              <strong>Would you like to contribute now?</strong>
+              <span>Please contact us and our team will help you. Your contribution will be recorded against your account, and you will see it in My Contributions.</span>
+            </div>
+            <div className="contribute-soon-actions">
+              <Link to="/contact" className="payment-submit contribute-soon-primary">Contact us</Link>
+              <Link to="/fund" className="contribute-soon-link">See how the fund is used</Link>
+            </div>
           </div>
         </main>
       </div>

@@ -624,3 +624,148 @@
 .fund-card-link:hover {
   text-decoration: underline;
 }
+
+/* Fund page: contributor photo */
+.contributor-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.contributor-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contributor-text .contributor-email {
+  margin-top: 0.125rem;
+  overflow-wrap: anywhere;
+}
+
+.contributor-avatar {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.contributor-avatar-btn {
+  padding: 0;
+  border: 0;
+  background: #f1f5f9;
+  cursor: zoom-in;
+  transition: box-shadow 0.15s ease;
+}
+
+.contributor-avatar-btn:hover,
+.contributor-avatar-btn:focus-visible {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #d4af37;
+  outline: none;
+}
+
+.contributor-avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.contributor-avatar-initials {
+  background: #fbf3d9;
+  color: #7a5700;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.contributor-avatar-masked {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+/* Contribute page: payments not open yet */
+.contribute-soon {
+  max-width: 560px;
+  margin: 2rem auto;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.contribute-soon-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.contribute-soon-badge {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.contribute-soon h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.contribute-soon p {
+  margin: 0 0 1.25rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.contribute-soon-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.contribute-soon-note strong {
+  color: #0f172a;
+}
+
+.contribute-soon-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.contribute-soon-primary {
+  display: inline-block;
+  width: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  text-decoration: none;
+}
+
+.contribute-soon-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #996c00;
+  text-decoration: none;
+}
+
+.contribute-soon-link:hover {
+  text-decoration: underline;
+}

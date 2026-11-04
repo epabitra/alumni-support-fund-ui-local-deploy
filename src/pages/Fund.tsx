@@ -6,10 +6,11 @@ import RoleBasedNav from '../components/RoleBasedNav';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getFundBalance, getPublicHistory } from '../app/modules/payment/core/_requests';
 import type { FundBalanceDTO, PublicPaymentHistoryDTO } from '../app/modules/payment/core/_models';
-import { getScholarshipPaymentHistory } from '../app/modules/scholarship/core/_requests';
+import { fetchStudentImageBlobUrl, getScholarshipPaymentHistory } from '../app/modules/scholarship/core/_requests';
 import type { ScholarshipPaymentDTO } from '../app/modules/scholarship/core/_models';
 import { formatLocalDate } from '../components/ScholarshipPaymentModal';
 import { ReceiptList } from '../components/ScholarshipReceipts';
+import ImageViewer from '../components/ImageViewer';
 import { DataTableToolbar, DataTablePagination, SortHeader, TableQuery } from '../components/DataTable';
 import '../styles/dashboard.css';
 import '../styles/payment.css';
@@ -20,7 +21,7 @@ const PAYMENT_METHODS: { value: string; label: string }[] = [
   { value: 'NETBANKING', label: 'Net banking' },
   { value: 'WALLET', label: 'Wallet' },
   { value: 'EMI', label: 'EMI' },
-  { value: 'ADMIN', label: 'Recorded by admin' }
+  { value: 'ADMIN', label: 'Paid to admin' }
 ];
 
 function formatCurrency(amount: number): string {
@@ -73,6 +74,60 @@ function useServerTable<T, Q extends TableQuery>(query: Q, load: (q: Q) => Promi
 }
 
 const DEFAULT_QUERY: TableQuery = { page: 0, size: 10, search: '', from: '', to: '', sortBy: 'date', sortDir: 'desc' };
+
+/** Each photo is fetched once per visit, however many rows that contributor has */
+const avatarCache = new Map<string, Promise<string>>();
+
+function loadAvatar(imageUrl: string): Promise<string> {
+  let request = avatarCache.get(imageUrl);
+  if (!request) {
+    request = fetchStudentImageBlobUrl(imageUrl);
+    request.catch(() => avatarCache.delete(imageUrl));
+    avatarCache.set(imageUrl, request);
+  }
+  return request;
+}
+
+/** Photo opens in the zoom viewer. Masked contributors get a neutral icon, so nothing identifies them. */
+const ContributorAvatar: React.FC<{ name?: string; imageUrl?: string }> = ({ name, imageUrl }) => {
+  const [src, setSrc] = useState('');
+  const [viewing, setViewing] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSrc('');
+    if (imageUrl) {
+      loadAvatar(imageUrl).then((url) => !cancelled && setSrc(url)).catch(() => {});
+    }
+    return () => { cancelled = true; };
+  }, [imageUrl]);
+
+  if (src && imageUrl) {
+    return (
+      <>
+        <button type="button" className="contributor-avatar contributor-avatar-btn" onClick={() => setViewing(true)} aria-label={`View photo of ${name || 'contributor'}`}>
+          <img src={src} alt="" />
+        </button>
+        {viewing && (
+          <ImageViewer images={[{ contentUrl: imageUrl }]} title={name} downloadName="member-photo" onClose={() => setViewing(false)} />
+        )}
+      </>
+    );
+  }
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    const initials = (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+    return <span className="contributor-avatar contributor-avatar-initials" aria-hidden>{initials}</span>;
+  }
+  return (
+    <span className="contributor-avatar contributor-avatar-masked" aria-hidden>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    </span>
+  );
+};
 
 const ContributionsTable: React.FC = () => {
   const { currentUser } = useAuth();
@@ -149,11 +204,15 @@ const ContributionsTable: React.FC = () => {
                   rows.map((row, idx) => (
                     <tr key={`${query.page}-${idx}`}>
                       <td>
-                        <span className="contributor-name" title={row.fullName ? undefined : 'Name masked for privacy'}>
-                          {row.fullName ?? row.maskedName ?? '—'}
-                        </span>
-                        <br />
-                        <small className="contributor-email">{row.fullEmail ?? row.maskedEmail ?? '—'}</small>
+                        <div className="contributor-cell">
+                          <ContributorAvatar name={row.fullName} imageUrl={row.profileImageUrl} />
+                          <div className="contributor-text">
+                            <span className="contributor-name" title={row.fullName ? undefined : 'Name masked for privacy'}>
+                              {row.fullName ?? row.maskedName ?? '—'}
+                            </span>
+                            <small className="contributor-email">{row.fullEmail ?? row.maskedEmail ?? '—'}</small>
+                          </div>
+                        </div>
                       </td>
                       <td>{formatDate(row.paymentDate)}</td>
                       <td className="amount-cell">{formatCurrency(row.amount)}</td>

@@ -4,9 +4,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import RoleBasedNav from '../components/RoleBasedNav';
 import { useAuth } from '../app/modules/auth/core/Auth';
-import { getAuth } from '../app/modules/auth/core/AuthHelpers';
-import { updateAccountProfile, uploadProfileImage } from '../app/modules/auth/core/_user_requests';
-import { GET_ACCOUNT_PROFILE_IMAGE } from '../app/Constants';
+import { fetchProfileImageBlobUrl, updateAccountProfile, uploadProfileImage } from '../app/modules/auth/core/_user_requests';
 import '../styles/dashboard.css';
 import '../styles/auth.css';
 
@@ -20,6 +18,9 @@ const editProfileSchema = Yup.object({
     .max(50, 'Last name is too long')
     .required('Last name is required'),
 });
+
+const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const PROFILE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 const EditProfile: React.FC = () => {
   const { currentUser, setCurrentUser } = useAuth();
@@ -39,20 +40,19 @@ const EditProfile: React.FC = () => {
       setCurrentImageUrl(null);
       return;
     }
-    const auth = getAuth();
-    if (!auth?.api_token) return;
-    fetch(GET_ACCOUNT_PROFILE_IMAGE, { headers: { Authorization: `Bearer ${auth.api_token}` } })
-      .then((r) => (r.ok ? r.blob() : null))
-      .then((blob) => {
-        if (blob) {
-          if (currentImageUrlRef.current) URL.revokeObjectURL(currentImageUrlRef.current);
-          const url = URL.createObjectURL(blob);
-          currentImageUrlRef.current = url;
-          setCurrentImageUrl(url);
+    let cancelled = false;
+    fetchProfileImageBlobUrl()
+      .then((url) => {
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
         }
+        currentImageUrlRef.current = url;
+        setCurrentImageUrl(url);
       })
-      .catch(() => {});
+      .catch(() => setCurrentImageUrl(null));
     return () => {
+      cancelled = true;
       if (currentImageUrlRef.current) {
         URL.revokeObjectURL(currentImageUrlRef.current);
         currentImageUrlRef.current = null;
@@ -90,7 +90,17 @@ const EditProfile: React.FC = () => {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith('image/')) return;
+    if (!file) return;
+    if (!PROFILE_IMAGE_TYPES.includes(file.type)) {
+      setServerError('Please choose a JPG, PNG or WebP image.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > PROFILE_IMAGE_MAX_BYTES) {
+      setServerError('That image is larger than 5 MB. Please choose a smaller one.');
+      e.target.value = '';
+      return;
+    }
     if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
     setPendingImageFile(file);
     setPendingPreviewUrl(URL.createObjectURL(file));
@@ -178,7 +188,7 @@ const EditProfile: React.FC = () => {
                       Cancel
                     </button>
                   )}
-                  <p className="profile-photo-row__hint">JPG, PNG or WebP, max 5 MB. Saved when you click Save.</p>
+                  <p className="profile-photo-row__hint">JPG, PNG or WebP, max 5 MB. Saved when you click Save. Shown beside your contributions on the Fund page only while Mask my info is off.</p>
                 </div>
               </div>
             </section>
