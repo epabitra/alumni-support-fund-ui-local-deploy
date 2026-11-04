@@ -231,6 +231,25 @@ const ContributionsTable: React.FC = () => {
   );
 };
 
+/** Where the student stood right after one payment */
+const PaymentProgress: React.FC<{ paid: number; total: number }> = ({ paid, total }) => {
+  const remaining = Math.max(0, total - paid);
+  const percent = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0;
+  return (
+    <div className="payment-progress">
+      <div className="payment-progress-paid">
+        <strong>{formatCurrency(paid)}</strong> of {formatCurrency(total)} paid
+      </div>
+      <div className="payment-progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label="Paid after this payment">
+        <div className={`payment-progress-fill ${remaining === 0 ? 'complete' : ''}`} style={{ width: `${percent}%` }} />
+      </div>
+      <div className={`payment-progress-remaining ${remaining === 0 ? 'complete' : ''}`}>
+        {remaining > 0 ? `${formatCurrency(remaining)} remaining` : '✓ Fully paid'}
+      </div>
+    </div>
+  );
+};
+
 const ScholarshipPaymentsTable: React.FC = () => {
   const [query, setQuery] = useState<TableQuery>(DEFAULT_QUERY);
   const update = (patch: Partial<TableQuery>) => setQuery((q) => ({ ...q, ...patch }));
@@ -273,14 +292,13 @@ const ScholarshipPaymentsTable: React.FC = () => {
                   <SortHeader label="Paid on" field="date" query={query} onSort={onSort} />
                   <SortHeader label="Amount paid" field="amount" query={query} onSort={onSort} />
                   <th>Purpose &amp; receipts</th>
-                  <th>Paid so far / Total</th>
-                  <th>Remaining</th>
+                  <th>After this payment</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="dt-empty">{loading ? 'Loading…' : 'No scholarship payments match these filters.'}</td>
+                    <td colSpan={5} className="dt-empty">{loading ? 'Loading…' : 'No scholarship payments match these filters.'}</td>
                   </tr>
                 ) : (
                   rows.map((row) => (
@@ -308,8 +326,7 @@ const ScholarshipPaymentsTable: React.FC = () => {
                         {row.remarks && <div className="scholarship-purpose-text">{row.remarks}</div>}
                         <ReceiptList receipts={row.receipts ?? []} emptyText="No receipt attached yet" />
                       </td>
-                      <td>{formatCurrency(row.totalPaid)} / {formatCurrency(row.totalCost)}</td>
-                      <td>{row.remainingAmount > 0 ? formatCurrency(row.remainingAmount) : 'Fully paid'}</td>
+                      <td><PaymentProgress paid={row.paidAfterThisPayment ?? row.totalPaid} total={row.totalCost} /></td>
                     </tr>
                   ))
                 )}

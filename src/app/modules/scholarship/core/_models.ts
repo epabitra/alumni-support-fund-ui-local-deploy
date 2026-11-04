@@ -100,6 +100,8 @@ export interface ScholarshipPaymentDTO {
   /** Purpose of the payment */
   remarks?: string;
   receipts: ScholarshipReceiptDTO[];
+  /** Paid to the student up to and including this payment, by paid-on date; fund page only */
+  paidAfterThisPayment?: number;
   /** Admin who paid; only in admin views */
   paidByName?: string;
   totalCost: number;

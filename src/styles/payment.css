@@ -769,3 +769,44 @@
 .contribute-soon-link:hover {
   text-decoration: underline;
 }
+
+/* Fund page: student's position right after a scholarship payment */
+.payment-progress {
+  min-width: 11rem;
+  font-size: 0.8125rem;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-progress-paid strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.payment-progress-track {
+  height: 0.375rem;
+  margin: 0.375rem 0 0.25rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.payment-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: #d4af37;
+}
+
+.payment-progress-fill.complete {
+  background: #16a34a;
+}
+
+.payment-progress-remaining {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.payment-progress-remaining.complete {
+  font-weight: 600;
+  color: #15803d;
+}
