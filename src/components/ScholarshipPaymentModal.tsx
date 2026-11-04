@@ -210,7 +210,7 @@ const ScholarshipPaymentModal: React.FC<ScholarshipPaymentModalProps> = ({
                     onChange={(files) => { setReceipts(files); setError(''); }}
                     disabled={submitting}
                   />
-                  <div className="form-help">All members can see these receipts on the Fund page. You can also add them later from Scholarship Payments → History.</div>
+                  <div className="form-help">All members can see these receipts on the Fund Transparency page. You can also add them later from Scholarship Payments → History.</div>
                 </div>
               </>
             )}

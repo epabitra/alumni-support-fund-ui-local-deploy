@@ -49,7 +49,7 @@ const Icon: React.FC<{ name: IconName; size?: number }> = ({ name, size = 20 }) 
 
 const DASHBOARD_ITEM: NavItem = { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' };
 const MY_CONTRIBUTIONS_ITEM: NavItem = { to: '/my-contributions', label: 'My Contributions', icon: 'receipt' };
-const FUND_ITEM: NavItem = { to: '/fund', label: 'Fund', icon: 'fund' };
+const FUND_ITEM: NavItem = { to: '/fund', label: 'Transparency', icon: 'fund' };
 const SELECTED_STUDENTS_ITEM: NavItem = { to: '/selected-students', label: 'Selected Students', icon: 'people' };
 
 const ADMIN_GROUPS: NavGroup[] = [
@@ -272,7 +272,7 @@ const RoleBasedNav: React.FC = () => {
 
   return (
     <>
-      <nav className="role-nav">
+      <nav className={`role-nav ${isAdmin ? 'role-nav--admin' : ''}`}>
         <div className="nav-brand">
           <Link to="/dashboard" className="nav-brand-link">
             <span className="nav-brand-icon">🎓</span>

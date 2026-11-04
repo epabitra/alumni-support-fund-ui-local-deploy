@@ -188,7 +188,7 @@ const EditProfile: React.FC = () => {
                       Cancel
                     </button>
                   )}
-                  <p className="profile-photo-row__hint">JPG, PNG or WebP, max 5 MB. Saved when you click Save. Shown beside your contributions on the Fund page only while Mask my info is off.</p>
+                  <p className="profile-photo-row__hint">JPG, PNG or WebP, max 5 MB. Saved when you click Save. Shown beside your contributions on the Fund Transparency page only while Mask my info is off.</p>
                 </div>
               </div>
             </section>

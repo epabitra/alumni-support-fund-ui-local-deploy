@@ -2440,7 +2440,8 @@
   display: none;
 }
 
-@media (max-width: 900px) {
+/* Hamburger menu and sidebar. 1100px is the narrowest width that fits every admin menu item in the top bar. */
+@media (max-width: 1100px) {
   .nav-desktop {
     display: none !important;
   }
@@ -2904,7 +2905,7 @@
 }
 
 /* Narrow laptops: keep everything on one row */
-@media (min-width: 901px) and (max-width: 1180px) {
+@media (min-width: 1101px) and (max-width: 1180px) {
   .role-nav .nav-link {
     padding: 0.5rem 0.625rem;
     font-size: 0.875rem;
@@ -2916,7 +2917,7 @@
 }
 
 /* The admin bar has seven items: drop the brand text before it runs out of room */
-@media (min-width: 901px) and (max-width: 1360px) {
+@media (min-width: 1101px) and (max-width: 1360px) {
   .role-nav .nav-brand-text {
     display: none;
   }
@@ -2930,5 +2931,12 @@
 
   .role-nav .nav-cta {
     padding: 0.55rem 0.7rem;
+  }
+}
+
+/* The admin bar has the most items: drop the brand text sooner so the avatar always stays on screen */
+@media (min-width: 1101px) and (max-width: 1500px) {
+  .role-nav--admin .nav-brand-text {
+    display: none;
   }
 }

@@ -86,21 +86,23 @@ const Dashboard: React.FC = () => {
                   <Link to="/fund" className="fund-overview-link">View fund transparency →</Link>
                 </div>
                 <div className="fund-overview-stats">
-                  <div className="stat-card fund-stat">
+                  <Link to="/fund?tab=received" className="stat-card fund-stat fund-stat-clickable">
                     <div className="stat-card-icon">📥</div>
                     <div className="stat-card-label">Total collected</div>
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalContributions ?? 0)}</div>
-                  </div>
+                    <span className="fund-stat-link">View contributions →</span>
+                  </Link>
                   <div className="stat-card fund-stat fund-stat-available">
                     <div className="stat-card-icon">💰</div>
                     <div className="stat-card-label">Available balance</div>
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalBalance ?? 0)}</div>
                   </div>
-                  <div className="stat-card fund-stat">
+                  <Link to="/fund?tab=paid" className="stat-card fund-stat fund-stat-clickable">
                     <div className="stat-card-icon">📤</div>
                     <div className="stat-card-label">Total disbursed</div>
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalDisbursements ?? 0)}</div>
-                  </div>
+                    <span className="fund-stat-link">View payments →</span>
+                  </Link>
                   <div className="stat-card fund-stat fund-stat-students">
                     <div className="stat-card-icon">🎓</div>
                     <div className="stat-card-label">Students supported</div>

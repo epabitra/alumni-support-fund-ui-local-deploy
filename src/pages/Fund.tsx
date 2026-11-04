@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { ROLE_ADMIN, ROLE_USER } from '../app/Constants';
 import RoleBasedNav from '../components/RoleBasedNav';
-import LoadingSpinner from '../components/LoadingSpinner';
 import { getFundBalance, getPublicHistory } from '../app/modules/payment/core/_requests';
 import type { FundBalanceDTO, PublicPaymentHistoryDTO } from '../app/modules/payment/core/_models';
 import { fetchStudentImageBlobUrl, getScholarshipPaymentHistory } from '../app/modules/scholarship/core/_requests';
@@ -129,7 +128,7 @@ const ContributorAvatar: React.FC<{ name?: string; imageUrl?: string }> = ({ nam
   );
 };
 
-const ContributionsTable: React.FC = () => {
+const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ onTotal }) => {
   const { currentUser } = useAuth();
   const canViewOwn = [ROLE_USER, ROLE_ADMIN].some((role) => currentUser?.authorities?.includes(role));
   const [query, setQuery] = useState<TableQuery & { extra: { method: string } }>({ ...DEFAULT_QUERY, extra: { method: '' } });
@@ -145,6 +144,11 @@ const ContributionsTable: React.FC = () => {
     })
   );
   const filtered = !!(query.search || query.from || query.to || query.extra.method);
+  // The summary card shows the full count, not the count of a filtered search
+  useEffect(() => {
+    if (!filtered && !loading && !error) onTotal(totalElements);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, loading, error, totalElements]);
   const onSort = (sortBy: string, sortDir: 'asc' | 'desc') => update({ sortBy, sortDir, page: 0 });
 
   return (
@@ -250,7 +254,7 @@ const PaymentProgress: React.FC<{ paid: number; total: number }> = ({ paid, tota
   );
 };
 
-const ScholarshipPaymentsTable: React.FC = () => {
+const ScholarshipPaymentsTable: React.FC<{ onTotal: (total: number) => void }> = ({ onTotal }) => {
   const [query, setQuery] = useState<TableQuery>(DEFAULT_QUERY);
   const update = (patch: Partial<TableQuery>) => setQuery((q) => ({ ...q, ...patch }));
   const { rows, totalElements, totalPages, loading, error } = useServerTable<ScholarshipPaymentDTO, TableQuery>(query, (q) =>
@@ -263,6 +267,11 @@ const ScholarshipPaymentsTable: React.FC = () => {
     })
   );
   const filtered = !!(query.search || query.from || query.to);
+  // The summary card shows the full count, not the count of a filtered search
+  useEffect(() => {
+    if (!filtered && !loading && !error) onTotal(totalElements);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, loading, error, totalElements]);
   const onSort = (sortBy: string, sortDir: 'asc' | 'desc') => update({ sortBy, sortDir, page: 0 });
 
   return (
@@ -340,25 +349,50 @@ const ScholarshipPaymentsTable: React.FC = () => {
   );
 };
 
+type FundTab = 'received' | 'paid';
+
+const countLabel = (count: number | null, singular: string, plural: string) =>
+  count == null ? '' : `${count} ${count === 1 ? singular : plural}`;
+
+/**
+ * Money in and money out are the two main questions on this page, so both are tabs at the top.
+ * The tab is in the address (?tab=received or ?tab=paid), so other pages can link straight to it.
+ */
 const Fund: React.FC = () => {
   const [balance, setBalance] = useState<FundBalanceDTO | null>(null);
-  const [balanceLoading, setBalanceLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [receivedCount, setReceivedCount] = useState<number | null>(null);
+  const [paidCount, setPaidCount] = useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab: FundTab = searchParams.get('tab') === 'received' ? 'received' : 'paid';
 
   useEffect(() => {
     getFundBalance()
       .then(setBalance)
-      .catch((e) => setError(e?.response?.data?.message || 'Failed to load fund balance.'))
-      .finally(() => setBalanceLoading(false));
+      .catch((e) => setError(e?.response?.data?.message || 'Failed to load fund balance.'));
   }, []);
+
+  const selectTab = (next: FundTab, focus = false) => {
+    setSearchParams({ tab: next }, { replace: true });
+    if (focus) document.getElementById(`fund-tab-${next}`)?.focus();
+  };
+
+  const onTabKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      selectTab(tab === 'received' ? 'paid' : 'received', true);
+    }
+  };
+
+  const amount = (value?: number) => (balance ? formatCurrency(value ?? 0) : '—');
 
   return (
     <div className="dashboard-container">
       <RoleBasedNav />
       <main className="fund-main dashboard-content">
         <div className="private-page-title-block">
-          <h1>Fund balance & transparency</h1>
-          <p>Current fund balance, every contribution (donor details are masked for privacy) and every scholarship payment made to students.</p>
+          <h1>Fund Transparency</h1>
+          <p>See every rupee we received and how it was used for students. Donor details stay masked unless they choose to show them.</p>
         </div>
 
         {error && (
@@ -367,21 +401,53 @@ const Fund: React.FC = () => {
           </div>
         )}
 
-        {balanceLoading ? (
-          <LoadingSpinner />
-        ) : balance && (
-          <div className="fund-balance-hero">
-            <h2>Current fund balance</h2>
-            <div className="balance-amount">{formatCurrency(balance.totalBalance)}</div>
-            <p style={{ margin: '0.5rem 0 0', opacity: 0.9, fontSize: '0.9375rem' }}>
-              Total contributions: {formatCurrency(balance.totalContributions)}
-              {balance.totalDisbursements > 0 && ` · Disbursements: ${formatCurrency(balance.totalDisbursements)}`}
-            </p>
+        <div className="fund-summary">
+          <div className="fund-summary-tabs" role="tablist" aria-label="Fund details" onKeyDown={onTabKeyDown}>
+            <button
+              type="button"
+              role="tab"
+              id="fund-tab-received"
+              aria-selected={tab === 'received'}
+              aria-controls="fund-panel-received"
+              tabIndex={tab === 'received' ? 0 : -1}
+              className={`fund-summary-card fund-summary-tab ${tab === 'received' ? 'active' : ''}`}
+              onClick={() => selectTab('received')}
+            >
+              <span className="fund-summary-label"><span aria-hidden>📥</span> Total received</span>
+              <span className="fund-summary-amount">{amount(balance?.totalContributions)}</span>
+              <span className="fund-summary-note">{countLabel(receivedCount, 'contribution', 'contributions')}</span>
+              <span className="fund-summary-action">{tab === 'received' ? 'Showing below ↓' : 'View list →'}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="fund-tab-paid"
+              aria-selected={tab === 'paid'}
+              aria-controls="fund-panel-paid"
+              tabIndex={tab === 'paid' ? 0 : -1}
+              className={`fund-summary-card fund-summary-tab ${tab === 'paid' ? 'active' : ''}`}
+              onClick={() => selectTab('paid')}
+            >
+              <span className="fund-summary-label"><span aria-hidden>🎓</span> Paid to students</span>
+              <span className="fund-summary-amount">{amount(balance?.totalDisbursements)}</span>
+              <span className="fund-summary-note">{countLabel(paidCount, 'payment', 'payments')}</span>
+              <span className="fund-summary-action">{tab === 'paid' ? 'Showing below ↓' : 'View list →'}</span>
+            </button>
           </div>
-        )}
+          <div className="fund-summary-card fund-summary-balance">
+            <span className="fund-summary-label"><span aria-hidden>💰</span> Available balance</span>
+            <span className="fund-summary-amount">{amount(balance?.totalBalance)}</span>
+            <span className="fund-summary-note">Ready for the next student payment</span>
+          </div>
+        </div>
 
-        <ContributionsTable />
-        <ScholarshipPaymentsTable />
+        {/* Both stay mounted, so searches and filters survive switching tabs */}
+        <div role="tabpanel" id="fund-panel-paid" aria-labelledby="fund-tab-paid" hidden={tab !== 'paid'}>
+          <ScholarshipPaymentsTable onTotal={setPaidCount} />
+        </div>
+        <div role="tabpanel" id="fund-panel-received" aria-labelledby="fund-tab-received" hidden={tab !== 'received'}>
+          <ContributionsTable onTotal={setReceivedCount} />
+        </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--ink-500)', marginTop: '1rem' }}>
           <Link to="/contribute" style={{ color: 'var(--brand-600)', fontWeight: 600 }}>

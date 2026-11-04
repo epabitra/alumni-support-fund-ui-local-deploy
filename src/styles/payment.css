@@ -810,3 +810,117 @@
   font-weight: 600;
   color: #15803d;
 }
+
+/* Fund Transparency: summary cards, two of which are the tabs */
+.fund-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.fund-summary-tabs {
+  display: contents;
+}
+
+.fund-summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 1.125rem 1.25rem;
+  text-align: left;
+  font-family: inherit;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.875rem;
+}
+
+.fund-summary-tab {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.fund-summary-tab:hover {
+  border-color: #d4af37;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.18);
+}
+
+.fund-summary-tab:focus-visible {
+  outline: 3px solid rgba(212, 175, 55, 0.5);
+  outline-offset: 2px;
+}
+
+.fund-summary-tab.active {
+  background: #fffbeb;
+  border-color: #d4af37;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.2);
+}
+
+.fund-summary-balance {
+  background: #f8fafc;
+}
+
+.fund-summary-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.fund-summary-amount {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-summary-note {
+  min-height: 1.1rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.fund-summary-action {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #996c00;
+}
+
+/* Dashboard boxes that open a list */
+a.fund-stat-clickable {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.fund-stat-clickable:hover {
+  transform: translateY(-2px);
+}
+
+a.fund-stat-clickable:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .fund-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .fund-summary-card {
+    padding: 0.875rem;
+  }
+
+  .fund-summary-amount {
+    font-size: 1.375rem;
+  }
+
+  .fund-summary-balance {
+    grid-column: 1 / -1;
+  }
+}
