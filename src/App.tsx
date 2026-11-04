@@ -7,6 +7,7 @@ import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import RefundPolicy from './pages/RefundPolicy';
+import VerifyEmail from './pages/VerifyEmail';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -54,6 +55,7 @@ function App() {
       <Route path="/refund-policy" element={<RefundPolicy />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
 
       {/* Protected Routes - Dashboard */}
       <Route

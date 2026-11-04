@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { createUser, login, getUserByToken } from '../app/modules/auth/core/_requests';
 import { uploadProfileImage } from '../app/modules/auth/core/_user_requests';
+import ResendVerification from '../components/ResendVerification';
+import { EmailVerifyCard } from './VerifyEmail';
 import '../styles/auth.css';
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
@@ -55,6 +57,7 @@ const Register: React.FC = () => {
   const [serverError, setServerError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
@@ -83,13 +86,21 @@ const Register: React.FC = () => {
       setSubmitting(true);
 
       try {
-        await createUser(
+        const { data: registration } = await createUser(
           values.email,
           values.firstName,
           values.lastName,
           values.password,
           values.revealDetailsInPublicHistory
         );
+
+        // The account stays inactive until the email is verified, so there is nothing to sign in to yet
+        if (registration?.verificationRequired) {
+          setPendingEmail(values.email);
+          setSubmitting(false);
+          setIsLoading(false);
+          return;
+        }
 
         // Log the user in directly so they don't have to sign in again
         const authRes = await login(values.email, values.password);
@@ -139,6 +150,22 @@ const Register: React.FC = () => {
   });
 
   const passwordStrength = getPasswordStrength(formik.values.password);
+
+  if (pendingEmail) {
+    return (
+      <EmailVerifyCard icon="📧" title="Check your inbox">
+        <p>
+          We sent a verification link to <strong>{pendingEmail}</strong>. Click it to activate your account, then sign in.
+        </p>
+        <p className="email-verify-note">
+          The link is valid for 24 hours. If you don't see the email, check your spam folder.
+          {profileImageFile && ' You can add your profile photo from Edit profile after signing in.'}
+        </p>
+        <ResendVerification email={pendingEmail} />
+        <p className="email-verify-note"><Link to="/login">Back to sign in</Link></p>
+      </EmailVerifyCard>
+    );
+  }
 
   return (
     <div className="auth-page">

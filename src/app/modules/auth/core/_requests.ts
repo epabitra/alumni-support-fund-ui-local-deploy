@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { POST_FETCH_BEARER_TOKEN, POST_FETCH_USER, POST_REGISTER_USER } from '../../../Constants';
+import { POST_FETCH_BEARER_TOKEN, POST_FETCH_USER, POST_REGISTER_USER, POST_VERIFY_EMAIL, POST_RESEND_VERIFICATION } from '../../../Constants';
 import { AuthModel } from './_models';
 import { UserModel } from './_models';
 
@@ -16,6 +16,16 @@ export function getUserByToken(_token: string) {
   return axios.post<UserModel>(POST_FETCH_USER, {});
 }
 
+/** Activates an account using the key from the verification email */
+export function verifyEmail(key: string) {
+  return axios.post(POST_VERIFY_EMAIL, { key });
+}
+
+/** Asks for a new verification link */
+export function resendVerificationEmail(email: string) {
+  return axios.post(POST_RESEND_VERIFICATION, { email });
+}
+
 export function createUser(
   email: string,
   firstname: string,
@@ -23,7 +33,7 @@ export function createUser(
   password: string,
   revealDetailsInPublicHistory?: boolean
 ) {
-  return axios.post(POST_REGISTER_USER, {
+  return axios.post<{ verificationRequired?: boolean }>(POST_REGISTER_USER, {
     email,
     firstName: firstname,
     lastName: lastname,

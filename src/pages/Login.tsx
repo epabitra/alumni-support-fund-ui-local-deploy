@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { login } from '../app/modules/auth/core/_requests';
+import ResendVerification from '../components/ResendVerification';
 import '../styles/auth.css';
 
 const loginSchema = Yup.object({
@@ -20,6 +21,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [serverError, setServerError] = useState<string>('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -38,6 +40,7 @@ const Login: React.FC = () => {
     validationSchema: loginSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setServerError('');
+      setUnverifiedEmail('');
       setIsLoading(true);
       setSubmitting(true);
 
@@ -57,7 +60,10 @@ const Login: React.FC = () => {
         setSubmitting(false);
         setIsLoading(false);
         
-        if (error.response?.status === 401) {
+        if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+          setUnverifiedEmail(values.email);
+          setServerError(error.response.data.message);
+        } else if (error.response?.status === 401) {
           setServerError('Invalid email or password. Please try again.');
         } else if (error.response?.data?.message) {
           setServerError(error.response.data.message);
@@ -152,6 +158,8 @@ const Login: React.FC = () => {
               {serverError}
             </div>
           )}
+
+          {unverifiedEmail && <ResendVerification key={unverifiedEmail} email={unverifiedEmail} />}
 
           <form className="auth-form" onSubmit={formik.handleSubmit} autoComplete="off">
             {/* Fake hidden fields to trick Chrome autofill */}
