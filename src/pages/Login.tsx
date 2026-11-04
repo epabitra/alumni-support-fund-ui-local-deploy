@@ -231,6 +231,10 @@ const Login: React.FC = () => {
               )}
             </div>
 
+            <div className="auth-forgot-link">
+              <Link to="/forgot-password">Forgot password?</Link>
+            </div>
+
             <button
               type="submit"
               className={`submit-button ${isLoading ? 'loading' : ''}`}

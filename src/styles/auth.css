@@ -966,3 +966,40 @@ select.form-input option {
   font-size: 0.8125rem;
   color: #b91c1c;
 }
+
+/* Forgot / reset password */
+.auth-forgot-link {
+  margin: -0.5rem 0 1rem;
+  text-align: right;
+  font-size: 0.875rem;
+}
+
+.auth-forgot-link a {
+  color: #996c00;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-forgot-link a:hover {
+  text-decoration: underline;
+}
+
+.email-verify-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.email-verify-form label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.email-verify-form .submit-button {
+  margin-top: 0.25rem;
+}
