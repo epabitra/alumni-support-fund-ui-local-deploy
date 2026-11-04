@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { getPendingStudents, getFeeDefaults, verifyStudent } from '../../app/modules/scholarship/core/_requests';
+import { getPendingStudents, getFeeDefaults, getStudentDetailsForVerifier, verifyStudent } from '../../app/modules/scholarship/core/_requests';
 import { StudentDTO, VerificationStatus, StudentVerificationDTO, StudentStatus } from '../../app/modules/scholarship/core/_models';
 import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
@@ -37,6 +37,7 @@ const PendingVerifications: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<StudentDTO | null>(null);
   const [showVerificationForm, setShowVerificationForm] = useState(false);
   const [viewDetailsStudent, setViewDetailsStudent] = useState<StudentDTO | null>(null);
+  const [detailsError, setDetailsError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(0);
@@ -61,6 +62,17 @@ const PendingVerifications: React.FC = () => {
       setError(err.response?.data?.message || 'Failed to load pending students');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewDetails = async (student: StudentDTO) => {
+    setViewDetailsStudent(student);
+    setDetailsError('');
+    try {
+      const { data } = await getStudentDetailsForVerifier(student.id!);
+      setViewDetailsStudent((current) => (current?.id === student.id ? data : current));
+    } catch {
+      setDetailsError('Could not load the family and contact details. Please try again.');
     }
   };
 
@@ -288,7 +300,7 @@ const PendingVerifications: React.FC = () => {
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          onClick={() => setViewDetailsStudent(student)}
+                          onClick={() => handleViewDetails(student)}
                         >
                           View details
                         </button>
@@ -387,6 +399,31 @@ const PendingVerifications: React.FC = () => {
                       </span>
                     </span>
                   </div>
+                </div>
+                <h3 style={{ margin: '1.5rem 0 0.75rem', fontSize: '1rem' }}>Family &amp; contact</h3>
+                {detailsError && <div className="alert alert-danger">{detailsError}</div>}
+                <div className="student-details-grid student-details-grid--two-cols">
+                  {([
+                    ['Parent/Guardian', viewDetailsStudent.parentName],
+                    ['Relation', viewDetailsStudent.parentRelation],
+                    ['Occupation', viewDetailsStudent.parentOccupation],
+                    ['Parent phone', viewDetailsStudent.parentPhone],
+                    ['Parent email', viewDetailsStudent.parentEmail],
+                    ['Annual income', viewDetailsStudent.annualIncome != null ? `₹${viewDetailsStudent.annualIncome.toLocaleString('en-IN')}` : undefined],
+                    ['Family members', viewDetailsStudent.familyMembers],
+                    ['Financial remarks', viewDetailsStudent.financialRemarks],
+                    ['Address', viewDetailsStudent.address],
+                    ['District', viewDetailsStudent.district],
+                    ['State', viewDetailsStudent.state],
+                    ['Pincode', viewDetailsStudent.pincode],
+                    ['Contact phone', viewDetailsStudent.phone],
+                    ['Email', viewDetailsStudent.email]
+                  ] as [string, string | number | undefined][]).map(([label, value]) => (
+                    <div className="detail-row" key={label}>
+                      <span className="detail-label">{label}</span>
+                      <span className="detail-value">{value ?? '—'}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="modal-footer">

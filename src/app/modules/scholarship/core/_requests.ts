@@ -114,6 +114,10 @@ export function getAllStudents(
 }
 
 /** Admin: correct a student's registration details */
+export function getStudentDetailsForVerifier(id: number) {
+  return scholarshipAxios.get<StudentDTO>(`${SCHOLARSHIP_BASE}/verifier/students/${id}/details`);
+}
+
 export function getStudentDetails(id: number) {
   return scholarshipAxios.get<StudentDTO>(`${SCHOLARSHIP_BASE}/admin/students/${id}`);
 }

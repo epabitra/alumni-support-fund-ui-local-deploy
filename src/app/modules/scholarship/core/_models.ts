@@ -49,7 +49,7 @@ export interface StudentDTO {
   schoolCode?: string;
   active?: boolean;
   images?: StudentImageDTO[];
-  /** Family, financial and contact details: only returned by the admin single-student endpoints */
+  /** Family, financial and contact details: only returned by the admin and verifier single-student endpoints */
   parentName?: string;
   parentRelation?: string;
   parentOccupation?: string;
