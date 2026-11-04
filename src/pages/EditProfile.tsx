@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useFormik } from 'formik';
+import { useFormik, yupToFormErrors } from 'formik';
 import * as Yup from 'yup';
 import RoleBasedNav from '../components/RoleBasedNav';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { fetchProfileImageBlobUrl, updateAccountProfile, uploadProfileImage } from '../app/modules/auth/core/_user_requests';
+import { isValidPhone } from '../app/modules/auth/core/phone';
 import '../styles/dashboard.css';
 import '../styles/auth.css';
 
@@ -17,6 +18,13 @@ const editProfileSchema = Yup.object({
     .min(1, 'Last name is required')
     .max(50, 'Last name is too long')
     .required('Last name is required'),
+  phone: Yup.string()
+    .trim()
+    .test('phone', 'Please enter a valid mobile number', (value) => !value || isValidPhone(value))
+    .when('$hadPhone', {
+      is: true,
+      then: (schema) => schema.required('Please enter your mobile number'),
+    }),
 });
 
 const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -64,8 +72,16 @@ const EditProfile: React.FC = () => {
     initialValues: {
       firstName: currentUser?.firstName ?? '',
       lastName: currentUser?.lastName ?? '',
+      phone: currentUser?.phone ?? '',
     },
-    validationSchema: editProfileSchema,
+    validate: async (values) => {
+      try {
+        await editProfileSchema.validate(values, { abortEarly: false, context: { hadPhone: !!currentUser?.phone } });
+        return {};
+      } catch (err: any) {
+        return yupToFormErrors(err);
+      }
+    },
     enableReinitialize: true,
     onSubmit: async (values) => {
       setServerError('');
@@ -78,12 +94,17 @@ const EditProfile: React.FC = () => {
           setPendingPreviewUrl(null);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }
-        const { data } = await updateAccountProfile(values.firstName, values.lastName);
+        const { data } = await updateAccountProfile(values.firstName, values.lastName, undefined, values.phone.trim());
         if (data) setCurrentUser(data);
         setShowSuccess(true);
       } catch (error: any) {
         const msg = error.response?.data?.message || error.message || 'Failed to update profile. Please try again.';
-        setServerError(msg);
+        if (error.response?.status === 400 && /phone|mobile/i.test(msg)) {
+          formik.setFieldTouched('phone', true, false);
+          formik.setFieldError('phone', msg);
+        } else {
+          setServerError(msg);
+        }
       }
     },
   });
@@ -131,7 +152,7 @@ const EditProfile: React.FC = () => {
               </svg>
             </div>
             <h1>Edit profile</h1>
-            <p>Update your name and preferences. Changes are saved when you click Save.</p>
+            <p>Update your name, phone number and preferences. Changes are saved when you click Save.</p>
           </div>
 
           {showSuccess ? (
@@ -207,6 +228,29 @@ const EditProfile: React.FC = () => {
                     placeholder="your@email.com"
                     aria-describedby="edit-email-hint"
                   />
+                  <p id="edit-email-hint" className="account-form-hint">Your email is verified, so it can't be changed.</p>
+                </div>
+                <div className="account-form-group">
+                  <label htmlFor="edit-phone">Phone number</label>
+                  <input
+                    id="edit-phone"
+                    name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="98765 43210"
+                    value={formik.values.phone}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className={formik.touched.phone && formik.errors.phone ? 'invalid' : ''}
+                    aria-invalid={!!(formik.touched.phone && formik.errors.phone)}
+                    aria-describedby="edit-phone-hint"
+                  />
+                  {formik.touched.phone && formik.errors.phone ? (
+                    <span id="edit-phone-hint" className="account-form-error-text" role="alert">{formik.errors.phone}</span>
+                  ) : (
+                    <p id="edit-phone-hint" className="account-form-hint">You can sign in with this number. Outside India, add your country code, like +1.</p>
+                  )}
                 </div>
                 <div className="account-form-row">
                   <div className="account-form-group">

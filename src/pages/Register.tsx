@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { createUser, login, getUserByToken } from '../app/modules/auth/core/_requests';
+import { isValidPhone } from '../app/modules/auth/core/phone';
 import ResendVerification from '../components/ResendVerification';
 import { EmailVerifyCard } from './VerifyEmail';
 import '../styles/auth.css';
@@ -31,6 +32,10 @@ const registerSchema = Yup.object({
     .email('Please enter a valid email address')
     .test('no-alias', 'Email addresses with + are not allowed. Please use your main email address.', (value) => !value?.includes('+'))
     .required('Please enter your email address'),
+  phone: Yup.string()
+    .trim()
+    .test('phone', 'Please enter a valid mobile number', (value) => !value || isValidPhone(value))
+    .required('Please enter your mobile number'),
   password: Yup.string()
     .max(50, 'Password must be less than 50 characters')
     .test('rules', 'Password does not meet the requirements below', (value) => PASSWORD_RULES.every((rule) => rule.test(value ?? '')))
@@ -77,6 +82,7 @@ const Register: React.FC = () => {
   /** Errors from the server about the address itself are shown under the email field */
   const [emailError, setEmailError] = useState<string>('');
   const [emailExists, setEmailExists] = useState(false);
+  const [phoneError, setPhoneError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
@@ -94,6 +100,7 @@ const Register: React.FC = () => {
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
       password: '',
       confirmPassword: '',
       revealDetailsInPublicHistory: false,
@@ -103,6 +110,7 @@ const Register: React.FC = () => {
       setServerError('');
       setEmailError('');
       setEmailExists(false);
+      setPhoneError('');
       setSuccess(false);
       setIsLoading(true);
       setSubmitting(true);
@@ -114,7 +122,8 @@ const Register: React.FC = () => {
           values.firstName.trim(),
           values.lastName.trim(),
           values.password,
-          values.revealDetailsInPublicHistory
+          values.revealDetailsInPublicHistory,
+          values.phone.trim()
         );
 
         // The account stays inactive until the email is verified, so there is nothing to sign in to yet
@@ -144,7 +153,9 @@ const Register: React.FC = () => {
 
         const data = error.response?.data;
         const message: string | undefined = data?.fieldErrors?.[0]?.message || data?.message;
-        if (error.response?.status === 409) {
+        if (error.response?.status === 400 && message && /phone|mobile/i.test(message)) {
+          setPhoneError(message);
+        } else if (error.response?.status === 409) {
           setEmailExists(true);
         } else if (error.response?.status === 400 && message && /email|registered|verification/i.test(message)) {
           setEmailError(message);
@@ -164,17 +175,18 @@ const Register: React.FC = () => {
   useEffect(() => {
     if (formik.submitCount === 0 || formik.isSubmitting || handledSubmit.current === formik.submitCount) return;
     handledSubmit.current = formik.submitCount;
-    const firstInvalid = ['firstName', 'lastName', 'email', 'password', 'confirmPassword']
+    const firstInvalid = ['firstName', 'lastName', 'email', 'phone', 'password', 'confirmPassword']
       .find((name) => formik.errors[name as keyof typeof formik.errors]);
     if (firstInvalid) document.getElementById(firstInvalid)?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.submitCount, formik.isSubmitting]);
 
-  const fieldError = (name: 'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword') =>
+  const fieldError = (name: 'firstName' | 'lastName' | 'email' | 'phone' | 'password' | 'confirmPassword') =>
     formik.touched[name] ? formik.errors[name] : undefined;
 
   const emailSuggestion = suggestEmail(formik.values.email);
   const emailInvalid = !!(fieldError('email') || emailError || emailExists);
+  const phoneMessage = fieldError('phone') || phoneError;
   const passwordTouched = formik.touched.password;
   const passwordsMatch = !!formik.values.confirmPassword && formik.values.confirmPassword === formik.values.password;
 
@@ -355,7 +367,36 @@ const Register: React.FC = () => {
                     Did you mean <strong>{emailSuggestion}</strong>?
                   </button>
                 ) : (
-                  <p className="form-hint">We'll email a link here to confirm it's you. Please use your regular email, not a temporary one.</p>
+                  <p className="form-hint">We'll email a link to confirm it's you. No temporary emails.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="auth-register-field">
+              <label htmlFor="phone" className="form-label">Mobile number</label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                className={`form-input ${phoneMessage ? 'error' : ''}`}
+                placeholder="98765 43210"
+                onChange={(e) => {
+                  setPhoneError('');
+                  formik.handleChange(e);
+                }}
+                onBlur={formik.handleBlur}
+                value={formik.values.phone}
+                disabled={isLoading}
+                autoComplete="tel"
+                aria-invalid={!!phoneMessage}
+                aria-describedby="phone-help"
+              />
+              <div id="phone-help">
+                {phoneMessage ? (
+                  <span className="error-message" role="alert">{phoneMessage}</span>
+                ) : (
+                  <p className="form-hint">For signing in. Outside India, add your country code, like +1.</p>
                 )}
               </div>
             </div>

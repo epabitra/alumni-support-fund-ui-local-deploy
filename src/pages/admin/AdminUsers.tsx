@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAllUsers, updateUser, AdminUserDTO } from '../../app/modules/auth/core/_user_requests';
+import { isValidPhone } from '../../app/modules/auth/core/phone';
 import { ROLE_USER, ROLE_ADMIN, ROLE_SERVICE_CENTER, ROLE_VERIFIER, ROLE_AUDITOR } from '../../app/Constants';
 import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
@@ -44,6 +45,7 @@ const AdminUsers: React.FC = () => {
           user.firstName?.toLowerCase().includes(query) ||
           user.lastName?.toLowerCase().includes(query) ||
           user.email?.toLowerCase().includes(query) ||
+          user.phone?.includes(query) ||
           user.login?.toLowerCase().includes(query)
         ));
       }
@@ -90,6 +92,10 @@ const AdminUsers: React.FC = () => {
     }));
   };
 
+  const handlePhoneChange = (userId: number, phone: string) => {
+    setUsers(users.map((user) => (user.id === userId ? { ...user, phone } : user)));
+  };
+
   const handleSave = async (user: AdminUserDTO) => {
     try {
       setError('');
@@ -101,13 +107,18 @@ const AdminUsers: React.FC = () => {
         return;
       }
 
-      await updateUser(user);
-      setSuccess(`User roles updated successfully for ${user.firstName} ${user.lastName}`);
+      if (user.phone?.trim() && !isValidPhone(user.phone)) {
+        setError('Please enter a valid mobile number. Outside India, start with the country code, like +1.');
+        return;
+      }
+
+      await updateUser({ ...user, phone: user.phone?.trim() ?? null });
+      setSuccess(`User updated successfully: ${user.firstName} ${user.lastName}`);
       setEditingUserId(null);
       // Reload current page to get fresh data
       await loadUsers();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update user roles');
+      setError(err.response?.data?.message || 'Failed to update user');
     }
   };
 
@@ -218,6 +229,7 @@ const AdminUsers: React.FC = () => {
                   <tr>
                     <th>Name</th>
                     <th>Email</th>
+                    <th>Phone</th>
                     <th>Login</th>
                     <th>Status</th>
                     <th>Roles</th>
@@ -231,6 +243,23 @@ const AdminUsers: React.FC = () => {
                         {user.firstName} {user.lastName}
                       </td>
                       <td>{user.email}</td>
+                      <td>
+                        {editingUserId === user.id ? (
+                          <input
+                            type="tel"
+                            className="form-input"
+                            style={{ minWidth: '10rem' }}
+                            placeholder="98765 43210"
+                            aria-label={`Phone number of ${user.firstName} ${user.lastName}`}
+                            value={user.phone ?? ''}
+                            onChange={(e) => handlePhoneChange(user.id!, e.target.value)}
+                          />
+                        ) : user.phone ? (
+                          <span style={{ whiteSpace: 'nowrap' }}>{user.phone}</span>
+                        ) : (
+                          <span className="badge">Not added</span>
+                        )}
+                      </td>
                       <td>{user.login}</td>
                       <td>
                         <span className={user.activated ? 'status-badge verified' : 'status-badge rejected'}>
@@ -287,7 +316,7 @@ const AdminUsers: React.FC = () => {
                             className="btn btn-sm btn-primary"
                             onClick={() => handleEdit(user)}
                           >
-                            Edit Roles
+                            Edit
                           </button>
                         )}
                       </td>

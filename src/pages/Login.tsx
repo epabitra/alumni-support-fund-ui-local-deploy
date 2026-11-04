@@ -4,13 +4,18 @@ import * as Yup from 'yup';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { login } from '../app/modules/auth/core/_requests';
+import { isValidPhone } from '../app/modules/auth/core/phone';
 import ResendVerification from '../components/ResendVerification';
 import '../styles/auth.css';
 
 const loginSchema = Yup.object({
-  email: Yup.string()
-    .email('Please enter a valid email address')
-    .required('Email is required'),
+  username: Yup.string()
+    .trim()
+    .required('Please enter your phone number or email')
+    .test('phone-or-email', 'Please enter a valid phone number or email', (value) => {
+      if (!value) return true;
+      return value.includes('@') ? Yup.string().email().isValidSync(value) : isValidPhone(value);
+    }),
   password: Yup.string()
     .min(4, 'Password must be at least 4 characters')
     .required('Password is required'),
@@ -21,7 +26,8 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [serverError, setServerError] = useState<string>('');
-  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  /** Set when the account needs email verification; email is only known if that's what they typed */
+  const [unverified, setUnverified] = useState<{ email?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -33,19 +39,19 @@ const Login: React.FC = () => {
 
   const formik = useFormik({
     initialValues: {
-      email: '',
+      username: '',
       password: '',
       rememberMe: false,
     },
     validationSchema: loginSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setServerError('');
-      setUnverifiedEmail('');
+      setUnverified(null);
       setIsLoading(true);
       setSubmitting(true);
 
       try {
-        const { data: authData } = await login(values.email, values.password);
+        const { data: authData } = await login(values.username.trim(), values.password);
         saveAuth(authData);
 
         const { getUserByToken } = await import('../app/modules/auth/core/_requests');
@@ -61,10 +67,10 @@ const Login: React.FC = () => {
         setIsLoading(false);
         
         if (error.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
-          setUnverifiedEmail(values.email);
+          setUnverified({ email: values.username.includes('@') ? values.username.trim() : undefined });
           setServerError(error.response.data.message);
         } else if (error.response?.status === 401) {
-          setServerError('Invalid email or password. Please try again.');
+          setServerError('Incorrect phone number, email or password. Please try again.');
         } else if (error.response?.data?.message) {
           setServerError(error.response.data.message);
         } else if (error.message) {
@@ -150,7 +156,7 @@ const Login: React.FC = () => {
         <div className="auth-form-container">
           <div className="auth-form-header">
             <h1>Sign In</h1>
-            <p>Enter your credentials to access your account</p>
+            <p>Use your phone number or email and your password</p>
           </div>
 
           {serverError && (
@@ -159,7 +165,7 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          {unverifiedEmail && <ResendVerification key={unverifiedEmail} email={unverifiedEmail} />}
+          {unverified && <ResendVerification key={unverified.email ?? 'phone'} email={unverified.email} />}
 
           <form className="auth-form" onSubmit={formik.handleSubmit} autoComplete="off">
             {/* Fake hidden fields to trick Chrome autofill */}
@@ -167,24 +173,25 @@ const Login: React.FC = () => {
             <input type="password" name="fake-password" autoComplete="current-password" style={{ display: 'none' }} tabIndex={-1} />
             
             <div className="form-group">
-              <label htmlFor="email" className="form-label required">
-                Email Address
+              <label htmlFor="username" className="form-label required">
+                Phone number or email
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                className={`form-input ${formik.touched.email && formik.errors.email ? 'error' : ''}`}
-                placeholder="you@example.com"
+                id="username"
+                name="username"
+                type="text"
+                className={`form-input ${formik.touched.username && formik.errors.username ? 'error' : ''}`}
+                placeholder="98765 43210 or you@example.com"
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                value={formik.values.email}
+                value={formik.values.username}
                 disabled={isLoading}
-                autoComplete="email"
-                data-form-type="other"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
               />
-              {formik.touched.email && formik.errors.email && (
-                <span className="error-message">{formik.errors.email}</span>
+              {formik.touched.username && formik.errors.username && (
+                <span className="error-message">{formik.errors.username}</span>
               )}
             </div>
 

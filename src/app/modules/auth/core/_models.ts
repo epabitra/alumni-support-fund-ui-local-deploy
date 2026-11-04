@@ -7,6 +7,7 @@ export interface AuthModel {
 export interface UserModel {
   id: number;
   email: string;
+  phone?: string | null;
   firstName: string;
   lastName: string;
   login: string;

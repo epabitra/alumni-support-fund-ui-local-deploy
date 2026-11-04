@@ -9,6 +9,7 @@ export interface AdminUserDTO {
   firstName?: string;
   lastName?: string;
   email: string;
+  phone?: string | null;
   activated: boolean;
   authorities?: string[];
 }
@@ -89,8 +90,8 @@ export function changePassword(currentPassword: string, newPassword: string) {
   return userAxios.post(POST_CHANGE_PASSWORD, { currentPassword, newPassword });
 }
 
-export function updateAccountProfile(firstName: string, lastName: string, revealDetailsInPublicHistory?: boolean) {
-  return userAxios.put<UserModel>(PUT_ACCOUNT_PROFILE, { firstName, lastName, revealDetailsInPublicHistory });
+export function updateAccountProfile(firstName: string, lastName: string, revealDetailsInPublicHistory?: boolean, phone?: string) {
+  return userAxios.put<UserModel>(PUT_ACCOUNT_PROFILE, { firstName, lastName, phone, revealDetailsInPublicHistory });
 }
 
 /**

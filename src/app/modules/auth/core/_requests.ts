@@ -3,9 +3,10 @@ import { POST_FETCH_BEARER_TOKEN, POST_FETCH_USER, POST_REGISTER_USER, POST_VERI
 import { AuthModel } from './_models';
 import { UserModel } from './_models';
 
-export function login(email: string, password: string) {
+/** username is what the person typed: their phone number or their email */
+export function login(username: string, password: string) {
   return axios.post<AuthModel>(POST_FETCH_BEARER_TOKEN, {
-    username: email,
+    username,
     password,
     rememberMe: true
   });
@@ -41,7 +42,8 @@ export function createUser(
   firstname: string,
   lastname: string,
   password: string,
-  revealDetailsInPublicHistory?: boolean
+  revealDetailsInPublicHistory?: boolean,
+  phone?: string
 ) {
   return axios.post<{ verificationRequired?: boolean }>(POST_REGISTER_USER, {
     email,
@@ -49,6 +51,7 @@ export function createUser(
     lastName: lastname,
     password,
     login: email,
+    phone,
     revealDetailsInPublicHistory: revealDetailsInPublicHistory ?? false,
   });
 }

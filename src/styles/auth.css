@@ -1194,6 +1194,13 @@ select.form-input option {
   }
 }
 
+/* Keeps the Create account button on screen on short laptop displays */
+@media (min-width: 1025px) and (max-height: 760px) {
+  .auth-page--register .form-input {
+    height: 2.5rem;
+  }
+}
+
 /* Inline field errors stay small so the form doesn't jump when they appear (a global rule draws them as boxes) */
 .auth-page--register .auth-register-field .error-message {
   display: block;
