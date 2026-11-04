@@ -113,6 +113,15 @@ export function getAllStudents(
   });
 }
 
+/** Admin: correct a student's registration details */
+export function getStudentDetails(id: number) {
+  return scholarshipAxios.get<StudentDTO>(`${SCHOLARSHIP_BASE}/admin/students/${id}`);
+}
+
+export function updateStudent(id: number, student: StudentDTO) {
+  return scholarshipAxios.put<StudentDTO>(`${SCHOLARSHIP_BASE}/admin/students/${id}`, student);
+}
+
 export function getServiceCenterStudents(
   page: number = 0,
   size: number = 20,
@@ -221,6 +230,10 @@ export function getScholarshipPaymentHistory(
 }
 
 // Service Center endpoints
+/** Optional form values: blank becomes undefined so it is stored as empty rather than failing validation. */
+export const blankToUndefined = (value?: string) => value?.trim() || undefined;
+const emptyToUndefined = (value?: number | string) => (value === '' || value == null ? undefined : Number(value));
+
 export function registerStudent(studentData: StudentRegistrationFormData) {
   const studentDTO: StudentDTO = {
     studentName: studentData.studentName,
@@ -229,7 +242,21 @@ export function registerStudent(studentData: StudentRegistrationFormData) {
     classLevel: studentData.classLevel,
     rollNumber: studentData.rollNumber,
     academicYear: studentData.academicYear,
-    schoolId: studentData.schoolId
+    schoolId: studentData.schoolId,
+    parentName: blankToUndefined(studentData.parentName),
+    parentRelation: blankToUndefined(studentData.parentRelation),
+    parentOccupation: blankToUndefined(studentData.parentOccupation),
+    parentPhone: blankToUndefined(studentData.parentPhone),
+    parentEmail: blankToUndefined(studentData.parentEmail),
+    annualIncome: emptyToUndefined(studentData.annualIncome),
+    familyMembers: emptyToUndefined(studentData.familyMembers),
+    financialRemarks: blankToUndefined(studentData.financialRemarks),
+    address: blankToUndefined(studentData.address),
+    district: blankToUndefined(studentData.district),
+    state: blankToUndefined(studentData.state),
+    pincode: blankToUndefined(studentData.pincode),
+    phone: blankToUndefined(studentData.phone),
+    email: blankToUndefined(studentData.email)
   };
 
   return scholarshipAxios.post<StudentDTO>(`${SCHOLARSHIP_BASE}/service-center/students`, studentDTO);

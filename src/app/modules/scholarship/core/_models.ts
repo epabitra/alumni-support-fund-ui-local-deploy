@@ -49,6 +49,21 @@ export interface StudentDTO {
   schoolCode?: string;
   active?: boolean;
   images?: StudentImageDTO[];
+  /** Family, financial and contact details: only returned by the admin single-student endpoints */
+  parentName?: string;
+  parentRelation?: string;
+  parentOccupation?: string;
+  parentPhone?: string;
+  parentEmail?: string;
+  annualIncome?: number;
+  familyMembers?: number;
+  financialRemarks?: string;
+  address?: string;
+  district?: string;
+  state?: string;
+  pincode?: string;
+  phone?: string;
+  email?: string;
   /** From verification; populated when listing verified students for admin selection */
   joiningFees?: number;
   annualFees?: number;

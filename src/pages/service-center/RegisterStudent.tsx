@@ -136,6 +136,9 @@ const RegisterStudent: React.FC = () => {
     email: Yup.string()
       .email('Invalid email address')
       .max(254, 'Email must not exceed 254 characters'),
+    parentEmail: Yup.string()
+      .email('Invalid email address')
+      .max(254, 'Email must not exceed 254 characters'),
     annualIncome: Yup.number()
       .min(0, 'Annual income cannot be negative'),
     familyMembers: Yup.number()
@@ -248,7 +251,7 @@ const RegisterStudent: React.FC = () => {
             <h1>Registration Successful</h1>
             <p>Student registration has been submitted successfully.</p>
             <p className="note">
-              <strong>Important:</strong> This record is now locked and cannot be edited. 
+              <strong>Important:</strong> This record is now locked. To correct a mistake, contact an administrator. 
               The application will proceed through the verification process.
             </p>
             <div className="success-actions">
@@ -571,6 +574,7 @@ const RegisterStudent: React.FC = () => {
                   name="parentOccupation"
                   type="text"
                   placeholder="Enter occupation (optional)"
+                  maxLength={100}
                   value={formik.values.parentOccupation || ''}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -628,7 +632,7 @@ const RegisterStudent: React.FC = () => {
                   type="number"
                   min="0"
                   placeholder="Enter annual income in rupees"
-                  value={formik.values.annualIncome || ''}
+                  value={formik.values.annualIncome ?? ''}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   disabled={submitted}
@@ -666,6 +670,7 @@ const RegisterStudent: React.FC = () => {
                 name="financialRemarks"
                 rows={4}
                 placeholder="Enter any additional financial information or remarks (optional)"
+                maxLength={1000}
                 value={formik.values.financialRemarks || ''}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -683,6 +688,7 @@ const RegisterStudent: React.FC = () => {
                 name="address"
                 rows={3}
                 placeholder="Enter complete residential address"
+                maxLength={500}
                 value={formik.values.address}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
