@@ -105,10 +105,10 @@ const Dashboard: React.FC = () => {
                     <div className="stat-card-label">Available balance</div>
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalBalance ?? 0)}</div>
                     {(fundBalance.heldByEvents ?? 0) > 0 && (
-                      <div className="fund-breakdown">
-                        <div className="fund-breakdown-row"><span>General Fund</span><strong>{formatCurrency(fundBalance.generalFundBalance ?? 0)}</strong></div>
-                        <div className="fund-breakdown-row"><Link to="/events">For events</Link><strong>{formatCurrency(fundBalance.heldByEvents ?? 0)}</strong></div>
-                      </div>
+                      <Link to="/events" className="fund-stat-link fund-stat-split"
+                        title="General Fund pays for scholarships; the rest is set aside for events">
+                        General {formatCurrency(fundBalance.generalFundBalance ?? 0)} · Events {formatCurrency(fundBalance.heldByEvents ?? 0)} →
+                      </Link>
                     )}
                   </div>
                   <Link to="/fund?tab=paid" className="stat-card fund-stat fund-stat-clickable">

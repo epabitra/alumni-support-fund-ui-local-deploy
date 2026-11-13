@@ -194,3 +194,10 @@
     align-items: flex-start;
   }
 }
+
+/* Available balance: General Fund / events split, in the same style as the other cards' links */
+.dashboard-fund-overview .fund-stat .fund-stat-link.fund-stat-split {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-align: center;
+}
