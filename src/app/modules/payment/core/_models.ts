@@ -22,6 +22,8 @@ export interface CheckoutConfigDTO {
 
 export interface CreatePaymentOrderDTO {
   amount: number;
+  /** The event chosen on the Contribute page; empty = General Fund */
+  fundEventId?: number;
   currency?: string;
   description?: string;
   receipt?: string;
@@ -80,6 +82,11 @@ export interface PaymentTransactionDTO {
   cardLast4?: string;
   cardNetwork?: string;
   createdDate?: string;
+  /** Event title, or "General Fund" */
+  purpose?: string;
+  fundEventId?: number | null;
+  /** Given back so far for this donation */
+  refundedAmount?: number;
 }
 
 export interface PublicPaymentHistoryDTO {
@@ -93,8 +100,16 @@ export interface PublicPaymentHistoryDTO {
   maskedEmail?: string;
   maskedPhone?: string;
   amount: number;
+  /** Given back to the donor; 0 if none */
+  refundedAmount?: number;
   paymentDate: string;
   paymentMethod?: string;
+  /** Event title, or "General Fund" */
+  purpose?: string;
+  /** Empty for the General Fund */
+  fundEventId?: number | null;
+  /** Admins only (needed to record a refund) */
+  orderId?: string;
 }
 
 export interface FundBalanceDTO {
@@ -104,6 +119,15 @@ export interface FundBalanceDTO {
   lastUpdated?: string;
   /** Number of selected students currently supported (scholarship recipients) */
   selectedStudentsCount?: number;
+  /** Money spent for events */
+  totalEventExpenses?: number;
+  totalRefunds?: number;
+  /** Part of the balance that belongs to events */
+  heldByEvents?: number;
+  /** Part of the balance free for scholarships */
+  generalFundBalance?: number;
+  /** Events holding money; DRAFT = set aside for an event that has not opened yet */
+  events?: { eventId: number; title: string; status: string; balance: number }[];
 }
 
 /** Receipt data for donation/contribution (screen and print). */
@@ -120,6 +144,9 @@ export interface ReceiptDTO {
   donorEmail: string;
   paymentMethodDisplay: string;
   status: string;
+  /** Event title, or "General Fund" */
+  purpose?: string;
+  refundedAmount?: number;
   generatedAt: string; // ISO
 }
 

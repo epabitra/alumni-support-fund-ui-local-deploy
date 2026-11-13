@@ -53,6 +53,8 @@ export interface PublicHistoryFilters {
   to?: string;
   /** UPI, CARD, NETBANKING, WALLET, EMI or ADMIN */
   method?: string;
+  /** "general" for the General Fund, or an event id */
+  fund?: string;
   sortBy?: 'date' | 'amount';
   sortDir?: 'asc' | 'desc';
 }

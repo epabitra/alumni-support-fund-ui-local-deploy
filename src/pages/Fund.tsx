@@ -13,6 +13,10 @@ import ImageViewer from '../components/ImageViewer';
 import { DataTableToolbar, DataTablePagination, SortHeader, TableQuery } from '../components/DataTable';
 import '../styles/dashboard.css';
 import '../styles/payment.css';
+import '../styles/events.css';
+import { getEventExpenses, getEvents } from '../app/modules/events/core/_requests';
+import type { FundEventDTO, FundEventExpenseDTO } from '../app/modules/events/core/_models';
+import { RefundModal } from '../components/events/EventModals';
 
 const PAYMENT_METHODS: { value: string; label: string }[] = [
   { value: 'UPI', label: 'UPI' },
@@ -128,10 +132,25 @@ const ContributorAvatar: React.FC<{ name?: string; imageUrl?: string }> = ({ nam
   );
 };
 
-const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ onTotal }) => {
+const PurposeChip: React.FC<{ purpose?: string; eventId?: number | null }> = ({ purpose, eventId }) =>
+  eventId ? (
+    <Link to={`/events/${eventId}`} className="purpose-chip event" title={purpose}>{purpose}</Link>
+  ) : (
+    <span className="purpose-chip">{purpose || 'General Fund'}</span>
+  );
+
+const NO_EXTRA = { method: '', fund: '' };
+
+const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged: () => void }> = ({ onTotal, onChanged }) => {
   const { currentUser } = useAuth();
   const canViewOwn = [ROLE_USER, ROLE_ADMIN].some((role) => currentUser?.authorities?.includes(role));
-  const [query, setQuery] = useState<TableQuery & { extra: { method: string } }>({ ...DEFAULT_QUERY, extra: { method: '' } });
+  const isAdmin = !!currentUser?.authorities?.includes(ROLE_ADMIN);
+  const [query, setQuery] = useState<TableQuery & { extra: { method: string; fund: string }; reload: number }>({ ...DEFAULT_QUERY, extra: NO_EXTRA, reload: 0 });
+  const [events, setEvents] = useState<FundEventDTO[]>([]);
+  const [refunding, setRefunding] = useState<PublicPaymentHistoryDTO | null>(null);
+  useEffect(() => {
+    getEvents().then(setEvents).catch(() => {});
+  }, []);
   const update = (patch: Partial<TableQuery>) => setQuery((q) => ({ ...q, ...patch }));
   const { rows, totalElements, totalPages, loading, error } = useServerTable<PublicPaymentHistoryDTO, typeof query>(query, (q) =>
     getPublicHistory(q.page, q.size, {
@@ -139,11 +158,12 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ on
       from: q.from,
       to: q.to,
       method: q.extra.method,
+      fund: q.extra.fund,
       sortBy: q.sortBy as 'date' | 'amount',
       sortDir: q.sortDir
     })
   );
-  const filtered = !!(query.search || query.from || query.to || query.extra.method);
+  const filtered = !!(query.search || query.from || query.to || query.extra.method || query.extra.fund);
   // The summary card shows the full count, not the count of a filtered search
   useEffect(() => {
     if (!filtered && !loading && !error) onTotal(totalElements);
@@ -160,16 +180,28 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ on
       <DataTableToolbar
         query={query}
         onChange={update}
-        searchPlaceholder="Name, email, amount or method"
-        hasExtraFilters={!!query.extra.method}
-        onClear={() => setQuery({ ...DEFAULT_QUERY, size: query.size, extra: { method: '' } })}
+        searchPlaceholder="Name, email, amount, method or event"
+        hasExtraFilters={!!(query.extra.method || query.extra.fund)}
+        onClear={() => setQuery((q) => ({ ...DEFAULT_QUERY, size: q.size, extra: NO_EXTRA, reload: q.reload }))}
       >
+        <div className="dt-field">
+          <label className="dt-label">For</label>
+          <select
+            className="dt-input custom-select"
+            value={query.extra.fund}
+            onChange={(e) => setQuery((q) => ({ ...q, page: 0, extra: { ...q.extra, fund: e.target.value } }))}
+          >
+            <option value="">Everything</option>
+            <option value="general">General Fund</option>
+            {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+          </select>
+        </div>
         <div className="dt-field">
           <label className="dt-label">Method</label>
           <select
             className="dt-input custom-select"
             value={query.extra.method}
-            onChange={(e) => setQuery((q) => ({ ...q, page: 0, extra: { method: e.target.value } }))}
+            onChange={(e) => setQuery((q) => ({ ...q, page: 0, extra: { ...q.extra, method: e.target.value } }))}
           >
             <option value="">All methods</option>
             {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
@@ -194,15 +226,17 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ on
               <thead>
                 <tr>
                   <th>Contributor</th>
+                  <th>For</th>
                   <SortHeader label="Date" field="date" query={query} onSort={onSort} />
                   <SortHeader label="Amount" field="amount" query={query} onSort={onSort} />
                   <th>Method</th>
+                  {isAdmin && <th><span className="visually-hidden">Actions</span></th>}
                 </tr>
               </thead>
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="dt-empty">{loading ? 'Loading…' : 'No contributions match these filters.'}</td>
+                    <td colSpan={isAdmin ? 6 : 5} className="dt-empty">{loading ? 'Loading…' : 'No contributions match these filters.'}</td>
                   </tr>
                 ) : (
                   rows.map((row, idx) => (
@@ -218,9 +252,24 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ on
                           </div>
                         </div>
                       </td>
+                      <td><PurposeChip purpose={row.purpose} eventId={row.fundEventId} /></td>
                       <td>{formatDate(row.paymentDate)}</td>
-                      <td className="amount-cell">{formatCurrency(row.amount)}</td>
+                      <td className="amount-cell">
+                        {formatCurrency(row.amount)}
+                        {(row.refundedAmount ?? 0) > 0 && (
+                          <small className="event-refunded">
+                            {(row.refundedAmount ?? 0) >= row.amount ? 'Refunded' : `${formatCurrency(row.refundedAmount ?? 0)} refunded`}
+                          </small>
+                        )}
+                      </td>
                       <td>{methodLabel(row.paymentMethod)}</td>
+                      {isAdmin && (
+                        <td>
+                          {row.orderId && (row.refundedAmount ?? 0) < row.amount && (
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRefunding(row)}>Refund</button>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -229,6 +278,84 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void }> = ({ on
           </div>
           <DataTablePagination query={query} totalElements={totalElements} totalPages={totalPages} loading={loading} onChange={update} />
           <p className="dt-note">Names and emails are searchable only for contributors who chose to show their details publicly.</p>
+        </>
+      )}
+      {refunding && (
+        <RefundModal
+          orderId={refunding.orderId!}
+          donor={refunding.fullName ?? refunding.maskedName ?? 'The donor'}
+          purpose={refunding.purpose || 'General Fund'}
+          amount={refunding.amount}
+          alreadyRefunded={refunding.refundedAmount ?? 0}
+          isEventDonation={!!refunding.fundEventId}
+          onClose={() => setRefunding(null)}
+          onSaved={() => {
+            setRefunding(null);
+            setQuery((q) => ({ ...q, reload: q.reload + 1 }));
+            onChanged();
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+/** Money spent for events, with bills; shown next to scholarship payments under Paid out */
+const EventExpensesTable: React.FC = () => {
+  const [query, setQuery] = useState<TableQuery>(DEFAULT_QUERY);
+  const update = (patch: Partial<TableQuery>) => setQuery((q) => ({ ...q, ...patch }));
+  const { rows, totalElements, totalPages, loading, error } = useServerTable<FundEventExpenseDTO, TableQuery>(query, (q) =>
+    getEventExpenses(q.page, q.size, { search: q.search, from: q.from, to: q.to, sortBy: q.sortBy as 'date' | 'amount', sortDir: q.sortDir })
+  );
+  const filtered = !!(query.search || query.from || query.to);
+  const onSort = (sortBy: string, sortDir: 'asc' | 'desc') => update({ sortBy, sortDir, page: 0 });
+
+  return (
+    <div className="payment-card">
+      <h2>Money spent for events</h2>
+      <DataTableToolbar query={query} onChange={update} searchPlaceholder="Event, purpose or amount" onClear={() => setQuery({ ...DEFAULT_QUERY, size: query.size })} />
+      {error && <div className="payment-message error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      {!loading && rows.length === 0 && !filtered ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">🎉</div>
+          <p>No money spent for events yet.</p>
+          <Link to="/events" className="fund-card-link">See events →</Link>
+        </div>
+      ) : (
+        <>
+          <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
+            <table className="payment-history-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <SortHeader label="Paid on" field="date" query={query} onSort={onSort} />
+                  <SortHeader label="Amount" field="amount" query={query} onSort={onSort} />
+                  <th>What it was for &amp; bills</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr><td colSpan={4} className="dt-empty">{loading ? 'Loading…' : 'No event spending matches these filters.'}</td></tr>
+                ) : (
+                  rows.map((row) => (
+                    <tr key={row.id}>
+                      <td><Link to={`/events/${row.eventId}`} className="purpose-chip event" title={row.eventTitle}>{row.eventTitle}</Link></td>
+                      <td>{formatLocalDate(row.paidOn)}</td>
+                      <td className="amount-cell">
+                        {formatCurrency(row.amount)}
+                        {row.coveredFromGeneral > 0 && <small className="event-covered">{formatCurrency(row.coveredFromGeneral)} from the General Fund</small>}
+                      </td>
+                      <td className="scholarship-purpose-cell">
+                        <div className="scholarship-purpose-text">{row.purpose}</div>
+                        <ReceiptList receipts={row.receipts ?? []} emptyText="No bill attached yet" />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <DataTablePagination query={query} totalElements={totalElements} totalPages={totalPages} loading={loading} onChange={update} />
         </>
       )}
     </div>
@@ -365,12 +492,14 @@ const Fund: React.FC = () => {
   const [paidCount, setPaidCount] = useState<number | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const tab: FundTab = searchParams.get('tab') === 'received' ? 'received' : 'paid';
+  const [paidView, setPaidView] = useState<'students' | 'events'>(searchParams.get('view') === 'events' ? 'events' : 'students');
 
-  useEffect(() => {
+  const loadBalance = () => {
     getFundBalance()
       .then(setBalance)
       .catch((e) => setError(e?.response?.data?.message || 'Failed to load fund balance.'));
-  }, []);
+  };
+  useEffect(loadBalance, []);
 
   const selectTab = (next: FundTab, focus = false) => {
     setSearchParams({ tab: next }, { replace: true });
@@ -415,7 +544,10 @@ const Fund: React.FC = () => {
             >
               <span className="fund-summary-label"><span aria-hidden>📥</span> Total received</span>
               <span className="fund-summary-amount">{amount(balance?.totalContributions)}</span>
-              <span className="fund-summary-note">{countLabel(receivedCount, 'contribution', 'contributions')}</span>
+              <span className="fund-summary-note">
+                {countLabel(receivedCount, 'contribution', 'contributions')}
+                {(balance?.totalRefunds ?? 0) > 0 && ` · after ${formatCurrency(balance?.totalRefunds ?? 0)} refunded`}
+              </span>
               <span className="fund-summary-action">{tab === 'received' ? 'Showing below ↓' : 'View list →'}</span>
             </button>
             <button
@@ -428,25 +560,46 @@ const Fund: React.FC = () => {
               className={`fund-summary-card fund-summary-tab ${tab === 'paid' ? 'active' : ''}`}
               onClick={() => selectTab('paid')}
             >
-              <span className="fund-summary-label"><span aria-hidden>🎓</span> Paid to students</span>
-              <span className="fund-summary-amount">{amount(balance?.totalDisbursements)}</span>
-              <span className="fund-summary-note">{countLabel(paidCount, 'payment', 'payments')}</span>
+              <span className="fund-summary-label"><span aria-hidden>🎓</span> Paid out</span>
+              <span className="fund-summary-amount">{amount((balance?.totalDisbursements ?? 0) + (balance?.totalEventExpenses ?? 0))}</span>
+              <span className="fund-summary-note">
+                {(balance?.totalEventExpenses ?? 0) > 0
+                  ? `Students ${formatCurrency(balance?.totalDisbursements ?? 0)} · Events ${formatCurrency(balance?.totalEventExpenses ?? 0)}`
+                  : countLabel(paidCount, 'payment to students', 'payments to students')}
+              </span>
               <span className="fund-summary-action">{tab === 'paid' ? 'Showing below ↓' : 'View list →'}</span>
             </button>
           </div>
           <div className="fund-summary-card fund-summary-balance">
             <span className="fund-summary-label"><span aria-hidden>💰</span> Available balance</span>
             <span className="fund-summary-amount">{amount(balance?.totalBalance)}</span>
-            <span className="fund-summary-note">Ready for the next student payment</span>
+            {balance && (balance.events?.length ?? 0) > 0 ? (
+              <div className="fund-breakdown" aria-label="Where the balance is kept">
+                <div className="fund-breakdown-row"><span>General Fund (scholarships)</span><strong>{formatCurrency(balance.generalFundBalance ?? 0)}</strong></div>
+                {balance.events!.map((e) => (
+                  <div className="fund-breakdown-row" key={e.eventId}>
+                    <Link to={`/events/${e.eventId}`} title={e.title}>{e.status === 'DRAFT' ? 'Reserved: ' : ''}{e.title}</Link>
+                    <strong>{formatCurrency(e.balance)}</strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="fund-summary-note">Ready for the next student payment</span>
+            )}
           </div>
         </div>
 
         {/* Both stay mounted, so searches and filters survive switching tabs */}
         <div role="tabpanel" id="fund-panel-paid" aria-labelledby="fund-tab-paid" hidden={tab !== 'paid'}>
-          <ScholarshipPaymentsTable onTotal={setPaidCount} />
+          <div className="fund-paid-switch" role="group" aria-label="Show payments">
+            <button type="button" aria-pressed={paidView === 'students'} onClick={() => setPaidView('students')}>To students</button>
+            <button type="button" aria-pressed={paidView === 'events'} onClick={() => setPaidView('events')}>For events</button>
+          </div>
+          <div hidden={paidView !== 'students'}><ScholarshipPaymentsTable onTotal={setPaidCount} /></div>
+          <div hidden={paidView !== 'events'}><EventExpensesTable /></div>
         </div>
         <div role="tabpanel" id="fund-panel-received" aria-labelledby="fund-tab-received" hidden={tab !== 'received'}>
-          <ContributionsTable onTotal={setReceivedCount} />
+          <ContributionsTable onTotal={setReceivedCount} onChanged={loadBalance} />
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--ink-500)', marginTop: '1rem' }}>

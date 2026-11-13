@@ -23,3 +23,9 @@ export const ROLE_VERIFIER = 'ROLE_VERIFIER';
 export const ROLE_AUDITOR = 'ROLE_AUDITOR';
 
 
+
+/**
+ * WhatsApp number (country code + number, digits only) members message to pledge a donation for an event.
+ * Can be changed without code through VITE_APP_DONATION_WHATSAPP.
+ */
+export const DONATION_WHATSAPP: string = (import.meta.env.VITE_APP_DONATION_WHATSAPP || '917377618313').replace(/\D/g, '');

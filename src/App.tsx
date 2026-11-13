@@ -21,6 +21,8 @@ import SelectedStudents from './pages/SelectedStudents';
 import ChangePassword from './pages/ChangePassword';
 import EditProfile from './pages/EditProfile';
 import MaskMyInfo from './pages/MaskMyInfo';
+import Events from './pages/Events';
+import EventDetail from './pages/EventDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { ROLE_ADMIN, ROLE_SERVICE_CENTER, ROLE_VERIFIER } from './app/Constants';
@@ -101,6 +103,22 @@ function App() {
         element={
           <ProtectedRoute>
             <Fund />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events"
+        element={
+          <ProtectedRoute>
+            <Events />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/events/:id"
+        element={
+          <ProtectedRoute>
+            <EventDetail />
           </ProtectedRoute>
         }
       />

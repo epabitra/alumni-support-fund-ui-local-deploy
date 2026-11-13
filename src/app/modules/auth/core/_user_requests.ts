@@ -72,6 +72,8 @@ export function updateUser(user: AdminUserDTO) {
 export interface AdminAddPaymentRequest {
   userEmail: string;
   amount: number;
+  /** The event this money is for; empty = General Fund */
+  fundEventId?: number;
 }
 
 export interface AdminAddPaymentResult {
@@ -80,6 +82,8 @@ export interface AdminAddPaymentResult {
   amount: number;
   userEmail: string;
   message: string;
+  /** Event title, or "General Fund" */
+  purpose?: string;
 }
 
 export function addPaymentAsAdmin(data: AdminAddPaymentRequest) {

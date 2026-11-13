@@ -51,6 +51,7 @@ const DASHBOARD_ITEM: NavItem = { to: '/dashboard', label: 'Dashboard', icon: 'd
 const MY_CONTRIBUTIONS_ITEM: NavItem = { to: '/my-contributions', label: 'My Contributions', icon: 'receipt' };
 const FUND_ITEM: NavItem = { to: '/fund', label: 'Transparency', icon: 'fund' };
 const SELECTED_STUDENTS_ITEM: NavItem = { to: '/selected-students', label: 'Selected Students', icon: 'people' };
+const EVENTS_ITEM: NavItem = { to: '/events', label: 'Events', icon: 'heart' };
 
 const ADMIN_GROUPS: NavGroup[] = [
   {
@@ -248,6 +249,7 @@ const RoleBasedNav: React.FC = () => {
       items: [
         DASHBOARD_ITEM,
         ...(canContribute ? [MY_CONTRIBUTIONS_ITEM] : []),
+        EVENTS_ITEM,
         { ...FUND_ITEM, label: 'Fund transparency' },
         SELECTED_STUDENTS_ITEM
       ]
@@ -261,6 +263,7 @@ const RoleBasedNav: React.FC = () => {
   const topLinks: NavItem[] = [
     DASHBOARD_ITEM,
     ...(canContribute ? [MY_CONTRIBUTIONS_ITEM] : []),
+    EVENTS_ITEM,
     FUND_ITEM,
     SELECTED_STUDENTS_ITEM,
     ...(showServiceCenter ? SERVICE_CENTER_ITEMS : []),

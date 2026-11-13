@@ -7,6 +7,12 @@ import { getFundBalance, getMyHistory } from '../app/modules/payment/core/_reque
 import type { FundBalanceDTO, PaymentTransactionDTO } from '../app/modules/payment/core/_models';
 import '../styles/dashboard.css';
 import '../styles/payment.css';
+import '../styles/events.css';
+import { getEvents } from '../app/modules/events/core/_requests';
+import type { FundEventDTO } from '../app/modules/events/core/_models';
+import { EventProgress, EventStatusBadge, eventDates } from '../components/events/EventBits';
+import { ShareEventButton } from '../components/events/ShareEvent';
+import { EventCover } from '../components/events/EventImages';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -32,11 +38,13 @@ function statusBadge(status: string): string {
 const Dashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const [fundBalance, setFundBalance] = useState<FundBalanceDTO | null>(null);
+  const [openEvents, setOpenEvents] = useState<FundEventDTO[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<PaymentTransactionDTO[]>([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
 
   useEffect(() => {
     getFundBalance().then(setFundBalance).catch(() => {});
+    getEvents().then((list) => setOpenEvents(list.filter((e) => e.status === 'OPEN' && !e.collectionEnded))).catch(() => {});
     
     // Load recent transactions for the user
     setLoadingTransactions(true);
@@ -96,11 +104,17 @@ const Dashboard: React.FC = () => {
                     <div className="stat-card-icon">💰</div>
                     <div className="stat-card-label">Available balance</div>
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalBalance ?? 0)}</div>
+                    {(fundBalance.heldByEvents ?? 0) > 0 && (
+                      <div className="fund-breakdown">
+                        <div className="fund-breakdown-row"><span>General Fund</span><strong>{formatCurrency(fundBalance.generalFundBalance ?? 0)}</strong></div>
+                        <div className="fund-breakdown-row"><Link to="/events">For events</Link><strong>{formatCurrency(fundBalance.heldByEvents ?? 0)}</strong></div>
+                      </div>
+                    )}
                   </div>
                   <Link to="/fund?tab=paid" className="stat-card fund-stat fund-stat-clickable">
                     <div className="stat-card-icon">📤</div>
                     <div className="stat-card-label">Total disbursed</div>
-                    <div className="stat-card-value">{formatCurrency(fundBalance.totalDisbursements ?? 0)}</div>
+                    <div className="stat-card-value">{formatCurrency((fundBalance.totalDisbursements ?? 0) + (fundBalance.totalEventExpenses ?? 0))}</div>
                     <span className="fund-stat-link">View payments →</span>
                   </Link>
                   <div className="stat-card fund-stat fund-stat-students">
@@ -158,6 +172,31 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* Live events, right below the hero; hidden when nothing is open */}
+        {openEvents.length > 0 && (
+          <section className="dashboard-open-events" aria-labelledby="dashboard-open-events-title">
+            <div className="section-header-inline">
+              <h2 id="dashboard-open-events-title" className="section-title-inline">Open events</h2>
+              <Link to="/events" className="section-link-inline">All events →</Link>
+            </div>
+            <div className="event-grid">
+              {openEvents.slice(0, 3).map((e) => (
+                <article key={e.id} className="event-card">
+                  <Link to={`/events/${e.id}`} className="event-cover-link" tabIndex={-1} aria-hidden><EventCover images={e.images} title={e.title} /></Link>
+                  <div className="event-card-top"><EventStatusBadge event={e} /><span className="event-card-dates">{eventDates(e)}</span></div>
+                  <h3 className="event-card-title"><Link to={`/events/${e.id}`}>{e.title}</Link></h3>
+                  <EventProgress event={e} />
+                  <div className="event-card-actions">
+                    <Link to={`/events/${e.id}`} className="btn btn-secondary btn-sm">View details</Link>
+                    <Link to={`/events/${e.id}#donate`} className="btn btn-primary btn-sm">Donate</Link>
+                    <ShareEventButton event={e} />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="dashboard-workspace">
 
@@ -317,7 +356,8 @@ const Dashboard: React.FC = () => {
                   <div className="transaction-info">
                     <div className="transaction-amount">{formatCurrency(tx.amount)}</div>
                     <div className="transaction-meta">
-                      {formatDate(tx.paymentDate || tx.createdDate)} • {tx.paymentMethod || 'Payment'}
+                      {formatDate(tx.paymentDate || tx.createdDate)} • {tx.paymentMethod || 'Payment'} • {tx.purpose || 'General Fund'}
+                      {(tx.refundedAmount ?? 0) > 0 && ` • ${formatCurrency(tx.refundedAmount ?? 0)} refunded`}
                     </div>
                   </div>
                   <div className="transaction-badge">

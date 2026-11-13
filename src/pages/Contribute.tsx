@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { getEvents } from '../app/modules/events/core/_requests';
+import type { FundEventDTO } from '../app/modules/events/core/_models';
 import RoleBasedNav from '../components/RoleBasedNav';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getCheckoutConfig, createPaymentOrder } from '../app/modules/payment/core/_requests';
@@ -31,6 +33,17 @@ const Contribute: React.FC = () => {
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [searchParams] = useSearchParams();
+  const [events, setEvents] = useState<FundEventDTO[]>([]);
+  /** '' = General Fund, otherwise an event id */
+  const [fundChoice, setFundChoice] = useState<string>(searchParams.get('event') ?? '');
+  const chosenEvent = events.find((e) => String(e.id) === fundChoice);
+
+  useEffect(() => {
+    getEvents()
+      .then((list) => setEvents(list.filter((e) => e.status === 'OPEN' && !e.collectionEnded)))
+      .catch(() => {});
+  }, []);
 
   const amountNum = (() => {
     const n = parseFloat(amount);
@@ -82,6 +95,7 @@ const Contribute: React.FC = () => {
           description: description.trim() || undefined,
           customerName: currentUser ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() : undefined,
           customerEmail: currentUser?.email,
+          fundEventId: chosenEvent ? chosenEvent.id : undefined,
         });
         if (order.status !== 'CREATED' && order.status !== 'PENDING') {
           setMessage({ type: 'error', text: 'Order could not be created. Please try again.' });
@@ -113,7 +127,7 @@ const Contribute: React.FC = () => {
         setMessage({ type: 'error', text: msg });
       }
     },
-    [amount, description, checkoutKey, currentUser, navigate]
+    [amount, description, checkoutKey, currentUser, navigate, chosenEvent]
   );
 
   if (loadingConfig) {
@@ -159,6 +173,12 @@ const Contribute: React.FC = () => {
               Thank you for wanting to support our students. We are finishing the setup of our secure payment
               gateway, and you will be able to contribute online here once it is ready.
             </p>
+            {chosenEvent && (
+              <div className="contribute-soon-note">
+                <strong>For {chosenEvent.title}</strong>
+                <span>Pay the fund admin directly and mention this event. Your donation will be recorded on the event page.</span>
+              </div>
+            )}
             <div className="contribute-soon-note">
               <strong>Would you like to contribute now?</strong>
               <span>Please contact us and our team will help you. Your contribution will be recorded against your account, and you will see it in My Contributions.</span>
@@ -190,6 +210,18 @@ const Contribute: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="payment-form">
+            <div className="form-group">
+              <label htmlFor="fund-choice">What is this for?</label>
+              <select id="fund-choice" className="custom-select" value={chosenEvent ? fundChoice : ''} onChange={(e) => setFundChoice(e.target.value)} disabled={submitting}>
+                <option value="">General Fund (scholarships)</option>
+                {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
+              </select>
+              <p className="form-hint">
+                {chosenEvent
+                  ? <>Your donation goes to <Link to={`/events/${chosenEvent.id}`}>{chosenEvent.title}</Link>. Any amount left after the event goes to the scholarship fund or towards a future event.</>
+                  : 'The General Fund pays for student scholarships.'}
+              </p>
+            </div>
             <div className="form-group">
               <label htmlFor="amount">Amount (₹) *</label>
               <input

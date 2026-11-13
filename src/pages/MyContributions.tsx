@@ -7,6 +7,7 @@ import { getMyContributions, getMyHistory, getReceipt } from '../app/modules/pay
 import type { UserContributionSummaryDTO, PaymentTransactionDTO, ReceiptDTO } from '../app/modules/payment/core/_models';
 import '../styles/dashboard.css';
 import '../styles/payment.css';
+import '../styles/events.css';
 
 const PAGE_SIZE = 10;
 
@@ -189,6 +190,7 @@ const MyContributions: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Date</th>
+                      <th>For</th>
                       <th>Transaction</th>
                       <th>Amount</th>
                       <th>Method</th>
@@ -200,8 +202,22 @@ const MyContributions: React.FC = () => {
                     {history.map((tx) => (
                       <tr key={tx.id}>
                         <td className="payment-date-cell" title={formatDate(tx.paymentDate || tx.createdDate)}>{formatDateShort(tx.paymentDate || tx.createdDate)}</td>
+                        <td>
+                          {tx.fundEventId ? (
+                            <Link to={`/events/${tx.fundEventId}`} className="purpose-chip event" title={tx.purpose}>{tx.purpose}</Link>
+                          ) : (
+                            <span className="purpose-chip">{tx.purpose || 'General Fund'}</span>
+                          )}
+                        </td>
                         <td className="transaction-id-cell">{tx.transactionId}</td>
-                        <td className="amount-cell">{formatCurrency(tx.amount)}</td>
+                        <td className="amount-cell">
+                          {formatCurrency(tx.amount)}
+                          {(tx.refundedAmount ?? 0) > 0 && (
+                            <small className="event-refunded">
+                              {(tx.refundedAmount ?? 0) >= tx.amount ? 'Refunded' : `${formatCurrency(tx.refundedAmount ?? 0)} refunded`}
+                            </small>
+                          )}
+                        </td>
                         <td>{tx.paymentMethod || tx.paymentGateway || '—'}</td>
                         <td>
                           <span className={`status-badge ${statusBadge(tx.status)}`}>{tx.status}</span>

@@ -72,6 +72,18 @@ const ReceiptView = forwardRef<HTMLDivElement, ReceiptViewProps>(function Receip
             <span className="receipt-value">{data.amountInWords}</span>
           </div>
         )}
+        {data.purpose && (
+          <div className="receipt-detail-row">
+            <span className="receipt-label">Contribution for</span>
+            <span className="receipt-value">{data.purpose}</span>
+          </div>
+        )}
+        {data.refundedAmount != null && data.refundedAmount > 0 && (
+          <div className="receipt-detail-row">
+            <span className="receipt-label">Refunded</span>
+            <span className="receipt-value">{formatAmount(data.refundedAmount, data.currency)}</span>
+          </div>
+        )}
         <div className="receipt-detail-row">
           <span className="receipt-label">Payment method</span>
           <span className="receipt-value">{data.paymentMethodDisplay || '—'}</span>

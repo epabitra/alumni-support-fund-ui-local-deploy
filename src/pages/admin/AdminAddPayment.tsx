@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { getAdminEvents } from '../../app/modules/events/core/_requests';
+import type { FundEventDTO } from '../../app/modules/events/core/_models';
 import { addPaymentAsAdmin, AdminAddPaymentResult } from '../../app/modules/auth/core/_user_requests';
 import { getReceipt } from '../../app/modules/payment/core/_requests';
 import type { ReceiptDTO } from '../../app/modules/payment/core/_models';
@@ -21,6 +24,15 @@ const AdminAddPayment: React.FC = () => {
   const [receipt, setReceipt] = useState<ReceiptDTO | null>(null);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptError, setReceiptError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const [events, setEvents] = useState<FundEventDTO[]>([]);
+  /** '' = General Fund */
+  const [fundChoice, setFundChoice] = useState<string>(searchParams.get('event') ?? '');
+  const chosenEvent = events.find((e) => String(e.id) === fundChoice);
+
+  useEffect(() => {
+    getAdminEvents().then((list) => setEvents(list.filter((e) => e.status === 'OPEN'))).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!receiptOrderId) {
@@ -74,6 +86,7 @@ const AdminAddPayment: React.FC = () => {
       const res = await addPaymentAsAdmin({
         userEmail: userEmail.trim(),
         amount: parseFloat(amount),
+        fundEventId: chosenEvent ? chosenEvent.id : undefined,
       });
       setSuccess(res.data);
       setUserEmail('');
@@ -112,6 +125,7 @@ const AdminAddPayment: React.FC = () => {
                 <li>Transaction ID: <code>{success.transactionId}</code></li>
                 <li>Amount: ₹{Number(success.amount).toLocaleString('en-IN')}</li>
                 <li>User: {success.userEmail}</li>
+                <li>For: {success.purpose || 'General Fund'}</li>
               </ul>
               <div className="mt-3">
                 <button
@@ -172,6 +186,26 @@ const AdminAddPayment: React.FC = () => {
               />
               <span className="form-help" style={{ display: 'block', marginTop: '0.25rem' }}>
                 Min ₹{MIN_AMOUNT}, max ₹{MAX_AMOUNT.toLocaleString()}.
+              </span>
+            </div>
+            <div className="form-group">
+              <label htmlFor="admin-add-payment-fund">For *</label>
+              <select
+                id="admin-add-payment-fund"
+                className="form-control custom-select"
+                value={chosenEvent ? fundChoice : ''}
+                onChange={(e) => setFundChoice(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">General Fund (scholarships)</option>
+                {events.map((e) => (
+                  <option key={e.id} value={e.id}>{e.title}{e.collectionEnded ? ' (donations ended – late payment)' : ''}</option>
+                ))}
+              </select>
+              <span className="form-help" style={{ display: 'block', marginTop: '0.25rem' }}>
+                {chosenEvent
+                  ? `This money will count for "${chosenEvent.title}" and is shown on its event page.`
+                  : 'Choose an event if the member paid for a specific event.'}
               </span>
             </div>
             <div className="form-actions">
