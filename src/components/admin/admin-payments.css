@@ -682,3 +682,17 @@
     width: 100%;
   }
 }
+
+/* "edited" marker next to a corrected amount (Fund page) */
+.amount-edited-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+  cursor: help;
+}

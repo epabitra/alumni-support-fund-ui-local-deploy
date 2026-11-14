@@ -258,6 +258,9 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged
                       <td>{formatDate(row.paymentDate)}</td>
                       <td className="amount-cell">
                         {formatCurrency(row.amount)}
+                        {row.correctedAt && (
+                          <span className="amount-edited-tag" title={`Corrected by an admin on ${formatDate(row.correctedAt)}`}>edited</span>
+                        )}
                         {(row.refundedAmount ?? 0) > 0 && (
                           <small className="event-refunded">
                             {(row.refundedAmount ?? 0) >= row.amount ? 'Refunded' : `${formatCurrency(row.refundedAmount ?? 0)} refunded`}
@@ -275,7 +278,6 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged
                               <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRefunding(row)}>Refund</button>
                             )}
                           </div>
-                          {row.correctedAt && <small className="event-refunded">edited</small>}
                         </td>
                       )}
                     </tr>
