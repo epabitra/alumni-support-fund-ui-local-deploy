@@ -1,101 +1,157 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getAdminEvents } from '../../app/modules/events/core/_requests';
 import type { FundEventDTO } from '../../app/modules/events/core/_models';
-import { addPaymentAsAdmin, AdminAddPaymentResult } from '../../app/modules/auth/core/_user_requests';
+import {
+  addPaymentAsAdmin,
+  getAdminPaymentEntries,
+  searchMembers,
+  type AdminAddPaymentResult,
+  type AdminPaymentEntry,
+  type AdminUserDTO
+} from '../../app/modules/auth/core/_user_requests';
 import { getReceipt } from '../../app/modules/payment/core/_requests';
 import type { ReceiptDTO } from '../../app/modules/payment/core/_models';
 import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
 import ReceiptContainer from '../../components/Receipt/ReceiptContainer';
+import { MemberPicker, initials, memberName, type MemberPickerHandle } from '../../components/admin/MemberPicker';
+import { AmountField, FundChoice, amountError, formatDay, todayISO } from '../../components/admin/PaymentFields';
+import { EditPaymentModal } from '../../components/admin/EditPaymentModal';
+import { formatRupees, parseRupees } from '../../components/admin/amountWords';
 import '../../styles/professional-ui.css';
+import '../../styles/events.css';
 import './admin.css';
+import '../../components/admin/admin-payments.css';
 
-const MIN_AMOUNT = 1;
-const MAX_AMOUNT = 1_000_000;
+/** What was just recorded, for the confirmation panel */
+interface Done {
+  result: AdminAddPaymentResult;
+  member: AdminUserDTO;
+  amount: number;
+  purpose: string;
+  paidOn: string;
+}
+
+/** Receipt of one payment in a dialog, so it never lingers on the form */
+const ReceiptDialog: React.FC<{ orderId: string; onClose: () => void }> = ({ orderId, onClose }) => {
+  const [receipt, setReceipt] = useState<ReceiptDTO | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    getReceipt(orderId).then(setReceipt).catch((e) => setError(e?.response?.data?.message || 'Could not load the receipt.'));
+  }, [orderId]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content ap-receipt-modal" role="dialog" aria-modal="true" aria-label="Receipt" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Receipt</h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="modal-body">
+          {error && <div className="alert alert-danger">{error}</div>}
+          {!receipt && !error && <p>Loading receipt…</p>}
+          {receipt && <ReceiptContainer data={receipt} showLinks={false} />}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AdminAddPayment: React.FC = () => {
-  const [userEmail, setUserEmail] = useState('');
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<AdminAddPaymentResult | null>(null);
-  const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<ReceiptDTO | null>(null);
-  const [receiptLoading, setReceiptLoading] = useState(false);
-  const [receiptError, setReceiptError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const picker = useRef<MemberPickerHandle>(null);
   const [events, setEvents] = useState<FundEventDTO[]>([]);
+  const [member, setMember] = useState<AdminUserDTO | null>(null);
+  const [amount, setAmount] = useState('');
   /** '' = General Fund */
-  const [fundChoice, setFundChoice] = useState<string>(searchParams.get('event') ?? '');
-  const chosenEvent = events.find((e) => String(e.id) === fundChoice);
+  const [fund, setFund] = useState<string>(searchParams.get('event') ?? '');
+  const [paidOn, setPaidOn] = useState(todayISO());
+  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState<Done | null>(null);
+  const [receiptFor, setReceiptFor] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
 
-  useEffect(() => {
-    getAdminEvents().then((list) => setEvents(list.filter((e) => e.status === 'OPEN'))).catch(() => {});
+  const [recent, setRecent] = useState<AdminPaymentEntry[]>([]);
+  const [recentPage, setRecentPage] = useState(0);
+  const [recentTotalPages, setRecentTotalPages] = useState(0);
+  const [recentLoading, setRecentLoading] = useState(true);
+
+  const loadRecent = useCallback((page = 0) => {
+    setRecentLoading(true);
+    getAdminPaymentEntries(page, 8)
+      .then((res) => {
+        setRecent((prev) => (page === 0 ? res.content : [...prev, ...res.content]));
+        setRecentPage(page);
+        setRecentTotalPages(res.totalPages);
+      })
+      .catch(() => {})
+      .finally(() => setRecentLoading(false));
   }, []);
 
   useEffect(() => {
-    if (!receiptOrderId) {
-      setReceipt(null);
-      setReceiptError(null);
-      return;
-    }
-    let cancelled = false;
-    setReceiptLoading(true);
-    setReceiptError(null);
-    getReceipt(receiptOrderId)
-      .then((data) => {
-        if (!cancelled) {
-          setReceipt(data);
-          setReceiptLoading(false);
-        }
-      })
-      .catch((err: any) => {
-        if (!cancelled) {
-          setReceiptError(err.response?.data?.message || err.message || 'Failed to load receipt.');
-          setReceiptLoading(false);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [receiptOrderId]);
+    getAdminEvents().then((list) => setEvents(list.filter((e) => e.status === 'OPEN'))).catch(() => {});
+    loadRecent(0);
+  }, [loadRecent]);
 
-  const validate = (): string | null => {
-    const email = userEmail.trim();
-    if (!email) return 'User email is required.';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return 'Please enter a valid email address.';
-    const num = parseFloat(amount);
-    if (amount === '' || isNaN(num)) return 'Amount is required.';
-    if (num < MIN_AMOUNT || num > MAX_AMOUNT) {
-      return `Amount must be between ₹${MIN_AMOUNT} and ₹${MAX_AMOUNT.toLocaleString()}.`;
-    }
-    return null;
+  // ?user=email (from the Users page) chooses the member straight away
+  useEffect(() => {
+    const email = searchParams.get('user');
+    if (!email) return;
+    searchMembers(email, 5).then((list) => {
+      const match = list.find((m) => m.email.toLowerCase() === email.toLowerCase());
+      if (match) setMember(match);
+    }).catch(() => {});
+  }, [searchParams]);
+
+  const chosenEvent = events.find((e) => String(e.id) === fund);
+  const fundValue = chosenEvent ? fund : '';
+  const purpose = chosenEvent ? chosenEvent.title : 'General Fund';
+  const n = parseRupees(amount);
+  const amountErr = submitted || amount ? amountError(amount) : '';
+  const ready = !!member && !amountError(amount) && !!paidOn && paidOn <= todayISO();
+
+  const reset = () => {
+    setDone(null);
+    setMember(null);
+    setAmount('');
+    setPaidOn(todayISO());
+    setSubmitted(false);
+    setError('');
+    setNotice('');
+    setTimeout(() => picker.current?.focus(), 0);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
+    setNotice('');
+    if (!member) return setError('Please choose the member who paid.');
+    const aErr = amountError(amount);
+    if (aErr) return setError(aErr);
+    if (!paidOn || paidOn > todayISO()) return setError('The date the money was received cannot be in the future.');
     setError('');
-    setSuccess(null);
-    const err = validate();
-    if (err) {
-      setError(err);
-      return;
-    }
+    setBusy(true);
     try {
-      setLoading(true);
       const res = await addPaymentAsAdmin({
-        userEmail: userEmail.trim(),
-        amount: parseFloat(amount),
+        userEmail: member.email,
+        amount: n,
         fundEventId: chosenEvent ? chosenEvent.id : undefined,
+        paidOn
       });
-      setSuccess(res.data);
-      setUserEmail('');
-      setAmount('');
+      setDone({ result: res.data, member, amount: n, purpose: res.data.purpose || purpose, paidOn });
+      loadRecent(0);
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to add payment.';
-      setError(msg);
+      setError(err?.response?.data?.message || err?.response?.data?.fieldErrors?.[0]?.message || 'Could not record the payment.');
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
 
@@ -104,117 +160,138 @@ const AdminAddPayment: React.FC = () => {
       <RoleBasedNav />
       <main className="admin-main">
         <PageHeader
-          title="Add payment (Admin)"
-          subtitle="Record a contribution for a user without using the payment gateway. The user must exist in the system (matched by email)."
+          title="Record a payment"
+          subtitle="For money a member gave by UPI, bank transfer or cash. It is added to the fund and to the member's history, and the member gets an email receipt."
         />
-        <div className="admin-card">
-          <h2 className="admin-card-title">Add payment for user</h2>
-          <p className="admin-card-description">
-            Enter the user's registered email and the amount in INR. This will update the fund balance and the user's contribution history. Payment will appear as &quot;Admin&quot; in history.
-          </p>
-          {error && (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="alert alert-success" role="alert">
-              <strong>Payment added successfully.</strong>
-              <ul className="mt-2 mb-0">
-                <li>Order ID: <code>{success.orderId}</code></li>
-                <li>Transaction ID: <code>{success.transactionId}</code></li>
-                <li>Amount: ₹{Number(success.amount).toLocaleString('en-IN')}</li>
-                <li>User: {success.userEmail}</li>
-                <li>For: {success.purpose || 'General Fund'}</li>
-              </ul>
-              <div className="mt-3">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setReceiptOrderId(success.orderId)}
-                >
-                  View &amp; download receipt
-                </button>
+
+        <div className="ap-layout">
+          <section className="admin-card ap-main" aria-label="Record a payment">
+            {done ? (
+              <div className="ap-done" role="status">
+                <div className="ap-done-icon" aria-hidden>✓</div>
+                <h2>{formatRupees(done.amount)} recorded</h2>
+                <p className="ap-done-line">
+                  from <strong>{memberName(done.member)}</strong> for <strong>{done.purpose}</strong>, received {formatDay(done.paidOn + 'T12:00:00')}
+                </p>
+                <p className="ap-done-ref">Reference {done.result.orderId} · a receipt was emailed to {done.member.email}</p>
+                <div className="ap-done-actions">
+                  <button type="button" className="btn btn-primary" onClick={reset} autoFocus>+ Record another payment</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setReceiptFor(done.result.orderId)}>View / print receipt</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setEditing(done.result.orderId)}>Made a mistake? Edit</button>
+                </div>
               </div>
+            ) : (
+              <form onSubmit={submit} noValidate className="ap-form">
+                <div className="ap-step">
+                  <span className="ap-step-no" aria-hidden>1</span>
+                  <div className="ap-step-body">
+                    <label className="ap-label" htmlFor="ap-member">Who paid?</label>
+                    <MemberPicker ref={picker} inputId="ap-member" value={member} onChange={(m) => { setMember(m); setError(''); }}
+                      disabled={busy} invalid={submitted && !member} />
+                    {submitted && !member && <p className="ap-words error">Please choose the member who paid.</p>}
+                  </div>
+                </div>
+
+                <div className="ap-step">
+                  <span className="ap-step-no" aria-hidden>2</span>
+                  <div className="ap-step-body">
+                    <label className="ap-label" htmlFor="ap-amount">How much?</label>
+                    <AmountField id="ap-amount" value={amount} onChange={(v) => { setAmount(v); setError(''); }} error={amountErr} disabled={busy} />
+                  </div>
+                </div>
+
+                <div className="ap-step">
+                  <span className="ap-step-no" aria-hidden>3</span>
+                  <div className="ap-step-body">
+                    <span className="ap-label">For</span>
+                    <FundChoice name="ap-fund" value={fundValue} onChange={setFund} events={events} disabled={busy} />
+                  </div>
+                </div>
+
+                <div className="ap-step">
+                  <span className="ap-step-no" aria-hidden>4</span>
+                  <div className="ap-step-body">
+                    <label className="ap-label" htmlFor="ap-date">Received on</label>
+                    <input id="ap-date" type="date" className="form-input ap-date" value={paidOn} max={todayISO()} disabled={busy}
+                      onChange={(e) => setPaidOn(e.target.value)} />
+                  </div>
+                </div>
+
+                {error && <div className="alert alert-danger" role="alert">{error}</div>}
+
+                <div className="ap-submit-bar">
+                  <p className="ap-summary">
+                    {ready
+                      ? <>Recording <strong>{formatRupees(n)}</strong> from <strong>{memberName(member!)}</strong> for <strong>{purpose}</strong>.</>
+                      : 'Choose the member and enter the amount.'}
+                  </p>
+                  <button type="submit" className="btn btn-primary ap-submit" disabled={busy}>
+                    {busy ? 'Recording…' : ready ? `Record ${formatRupees(n)}` : 'Record payment'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
+
+          <aside className="admin-card ap-recent" aria-labelledby="ap-recent-title">
+            <div className="ap-recent-head">
+              <h2 id="ap-recent-title">Recent entries</h2>
+              <Link to="/fund?tab=received">All contributions →</Link>
             </div>
-          )}
-          {receiptOrderId && (
-            <div className="admin-card mt-3" style={{ marginTop: '1.5rem' }}>
-              <div className="d-flex justify-content-between align-items-center" style={{ marginBottom: '1rem' }}>
-                <h3 className="admin-card-title" style={{ margin: 0 }}>Receipt</h3>
-                <button type="button" className="btn btn-outline-secondary" onClick={() => { setReceiptOrderId(null); setReceipt(null); }}>
-                  Close
-                </button>
-              </div>
-              {receiptLoading && <p>Loading receipt…</p>}
-              {receiptError && <div className="alert alert-danger">{receiptError}</div>}
-              {receipt && (
-                <ReceiptContainer
-                  data={receipt}
-                  showLinks={false}
-                />
-              )}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="admin-form">
-            <div className="form-group">
-              <label htmlFor="admin-add-payment-email">User email *</label>
-              <input
-                id="admin-add-payment-email"
-                type="email"
-                className="form-control"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                placeholder="user@example.com"
-                disabled={loading}
-                autoComplete="email"
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="admin-add-payment-amount">Amount (INR) *</label>
-              <input
-                id="admin-add-payment-amount"
-                type="number"
-                min={MIN_AMOUNT}
-                max={MAX_AMOUNT}
-                step="0.01"
-                className="form-control"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="e.g. 500"
-                disabled={loading}
-              />
-              <span className="form-help" style={{ display: 'block', marginTop: '0.25rem' }}>
-                Min ₹{MIN_AMOUNT}, max ₹{MAX_AMOUNT.toLocaleString()}.
-              </span>
-            </div>
-            <div className="form-group">
-              <label htmlFor="admin-add-payment-fund">For *</label>
-              <select
-                id="admin-add-payment-fund"
-                className="form-control custom-select"
-                value={chosenEvent ? fundChoice : ''}
-                onChange={(e) => setFundChoice(e.target.value)}
-                disabled={loading}
-              >
-                <option value="">General Fund (scholarships)</option>
-                {events.map((e) => (
-                  <option key={e.id} value={e.id}>{e.title}{e.collectionEnded ? ' (donations ended – late payment)' : ''}</option>
-                ))}
-              </select>
-              <span className="form-help" style={{ display: 'block', marginTop: '0.25rem' }}>
-                {chosenEvent
-                  ? `This money will count for "${chosenEvent.title}" and is shown on its event page.`
-                  : 'Choose an event if the member paid for a specific event.'}
-              </span>
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Adding…' : 'Add payment'}
+            {notice && <div className="ap-note ok" role="status">{notice}</div>}
+            {recent.length === 0 && !recentLoading && <p className="ap-empty">Payments you record will appear here.</p>}
+            <ul className="ap-recent-list">
+              {recent.map((r) => {
+                const name = r.userName || r.userEmail || '—';
+                return (
+                  <li key={r.orderId} className={done?.result.orderId === r.orderId ? 'just-added' : ''}>
+                    <span className="mp-avatar" aria-hidden>{initials(name)}</span>
+                    <div className="ap-recent-text">
+                      <strong>{name}</strong>
+                      <small>
+                        {r.purpose} · {formatDay(r.paidAt)}
+                        {r.correctedAt && <span className="ap-tag" title={`Corrected ${formatDay(r.correctedAt)}`}>edited</span>}
+                      </small>
+                    </div>
+                    <div className="ap-recent-side">
+                      <strong className="ap-recent-amount">{formatRupees(r.amount)}</strong>
+                      <span className="ap-recent-actions">
+                        <button type="button" className="ap-link" onClick={() => setReceiptFor(r.orderId)}>Receipt</button>
+                        {r.editable && <button type="button" className="ap-link" onClick={() => setEditing(r.orderId)}>Edit</button>}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            {recentPage + 1 < recentTotalPages && (
+              <button type="button" className="btn btn-secondary btn-sm ap-more" disabled={recentLoading} onClick={() => loadRecent(recentPage + 1)}>
+                {recentLoading ? 'Loading…' : 'Show more'}
               </button>
-            </div>
-          </form>
+            )}
+          </aside>
         </div>
+
+        {receiptFor && <ReceiptDialog orderId={receiptFor} onClose={() => setReceiptFor(null)} />}
+        {editing && (
+          <EditPaymentModal
+            orderId={editing}
+            onClose={() => setEditing(null)}
+            onSaved={(entry) => {
+              setEditing(null);
+              setNotice(`Saved. ${entry.userName}'s payment is now ${formatRupees(entry.amount)} for ${entry.purpose}, everywhere.`);
+              if (done && done.result.orderId === entry.orderId) {
+                setDone({
+                  ...done,
+                  amount: entry.amount,
+                  purpose: entry.purpose,
+                  member: { ...done.member, email: entry.userEmail || done.member.email, firstName: entry.userName, lastName: '' }
+                });
+              }
+              loadRecent(0);
+            }}
+          />
+        )}
       </main>
     </div>
   );

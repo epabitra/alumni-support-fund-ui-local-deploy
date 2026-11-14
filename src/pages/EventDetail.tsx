@@ -22,6 +22,7 @@ import { ReceiptFilePicker, ReceiptList, validateReceiptFiles } from '../compone
 import { EventGallery, EventImageManager } from '../components/events/EventImages';
 import { ShareEventButton } from '../components/events/ShareEvent';
 import { WhatsAppPledge } from '../components/events/WhatsAppPledge';
+import { EditPaymentModal } from '../components/admin/EditPaymentModal';
 import { EventReportCard, ExpenseDetailsModal, PlanVsActual, qtyTimesPrice, ReportModal, ReportPrompt } from '../components/events/EventPlan';
 import '../styles/dashboard.css';
 import '../styles/payment.css';
@@ -39,6 +40,7 @@ type Dialog =
   | { kind: 'bills'; expenseId: number }
   | { kind: 'expenseDetails'; expenseId: number }
   | { kind: 'report' }
+  | { kind: 'editDonation'; orderId: string }
   | null;
 
 function formatDateTime(iso?: string): string {
@@ -319,9 +321,14 @@ const EventDetail: React.FC = () => {
                         </td>
                         {isAdmin && (
                           <td>
-                            {d.orderId && refunded < d.amount && (
-                              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: 'refund', donation: d })}>Refund</button>
-                            )}
+                            <div className="table-actions">
+                              {d.orderId && d.editable && (
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: 'editDonation', orderId: d.orderId! })}>Edit</button>
+                              )}
+                              {d.orderId && refunded < d.amount && (
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDialog({ kind: 'refund', donation: d })}>Refund</button>
+                              )}
+                            </div>
                           </td>
                         )}
                       </tr>
@@ -392,6 +399,9 @@ const EventDetail: React.FC = () => {
             onClose={() => setDialog(null)}
             onSaved={() => done('Refund recorded. The donor has been emailed.')}
           />
+        )}
+        {dialog?.kind === 'editDonation' && (
+          <EditPaymentModal orderId={dialog.orderId} onClose={() => setDialog(null)} onSaved={() => done('Donation corrected. The totals are updated.')} />
         )}
         {dialog?.kind === 'report' && (
           <ReportModal event={event} onClose={() => { setDialog(null); load(); }}

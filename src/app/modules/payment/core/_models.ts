@@ -110,6 +110,10 @@ export interface PublicPaymentHistoryDTO {
   fundEventId?: number | null;
   /** Admins only (needed to record a refund) */
   orderId?: string;
+  /** Admins only: recorded by hand and can still be corrected */
+  editable?: boolean;
+  /** Admins only: when it was last corrected */
+  correctedAt?: string | null;
 }
 
 export interface FundBalanceDTO {

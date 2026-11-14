@@ -12,6 +12,24 @@ export interface AdminUserDTO {
   phone?: string | null;
   activated: boolean;
   authorities?: string[];
+  /** Read only (list) */
+  createdDate?: string;
+  totalContributed?: number;
+  contributionCount?: number;
+  lastContributionDate?: string | null;
+}
+
+export interface UserFilters {
+  /** Name, email, login or mobile */
+  search?: string;
+  role?: string;
+  /** 'active' | 'inactive' */
+  status?: string;
+  /** Joined from / to, yyyy-MM-dd */
+  from?: string;
+  to?: string;
+  sortBy?: 'name' | 'email' | 'joined';
+  sortDir?: 'asc' | 'desc';
 }
 
 export interface PageResponse<T> {
@@ -41,9 +59,13 @@ userAxios.interceptors.request.use(
   }
 );
 
-export function getAllUsers(page: number = 0, size: number = 20) {
+export function getAllUsers(page: number = 0, size: number = 20, filters: UserFilters = {}) {
+  const params: Record<string, string | number> = { page, size };
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v != null && String(v).trim() !== '') params[k] = String(v).trim();
+  });
   return userAxios.get<AdminUserDTO[]>(`${API_URL}/admin/users`, {
-    params: { page, size }
+    params
   }).then(response => {
     // Convert response to PageResponse format
     const totalElements = parseInt(response.headers['x-total-count'] || '0', 10);
@@ -64,6 +86,11 @@ export function getAllUsers(page: number = 0, size: number = 20) {
   });
 }
 
+/** Member suggestions for pickers: matches name, mobile or email */
+export function searchMembers(query: string, size = 8) {
+  return getAllUsers(0, size, { search: query, sortBy: 'name', sortDir: 'asc' }).then((r) => r.data.content);
+}
+
 export function updateUser(user: AdminUserDTO) {
   return userAxios.put<AdminUserDTO>(`${API_URL}/users/updateUser`, user);
 }
@@ -74,6 +101,68 @@ export interface AdminAddPaymentRequest {
   amount: number;
   /** The event this money is for; empty = General Fund */
   fundEventId?: number;
+  /** Day the money was received, yyyy-MM-dd; empty = today */
+  paidOn?: string;
+}
+
+export interface PaymentCorrectionDTO {
+  correctedAt: string;
+  correctedBy?: string | null;
+  oldAmount: number;
+  newAmount: number;
+  oldUser?: string | null;
+  newUser?: string | null;
+  oldPurpose: string;
+  newPurpose: string;
+  oldPaidAt?: string | null;
+  newPaidAt?: string | null;
+  reason: string;
+}
+
+/** A payment as admins see it (Add payment page, edit dialog) */
+export interface AdminPaymentEntry {
+  orderId: string;
+  amount: number;
+  refundedAmount: number;
+  purpose: string;
+  fundEventId?: number | null;
+  paidAt: string;
+  recordedAt: string;
+  recordedBy?: string | null;
+  paymentMethod?: string;
+  userId?: number;
+  userName?: string;
+  userEmail?: string;
+  userPhone?: string | null;
+  correctedAt?: string | null;
+  editable: boolean;
+  notEditableReason?: string | null;
+  corrections: PaymentCorrectionDTO[];
+}
+
+export interface AdminPaymentCorrection {
+  userEmail: string;
+  amount: number;
+  /** null = General Fund */
+  fundEventId: number | null;
+  paidOn: string;
+  reason: string;
+}
+
+/** Payments recorded by admins, newest first */
+export function getAdminPaymentEntries(page = 0, size = 8) {
+  return userAxios
+    .get<PageResponse<AdminPaymentEntry>>(`${API_URL}/admin/payments/entries`, { params: { page, size } })
+    .then((r) => r.data);
+}
+
+export function getAdminPaymentEntry(orderId: string) {
+  return userAxios.get<AdminPaymentEntry>(`${API_URL}/admin/payments/${encodeURIComponent(orderId)}`).then((r) => r.data);
+}
+
+/** Correct member, amount, fund or date of a payment recorded by an admin; updated everywhere */
+export function correctAdminPayment(orderId: string, body: AdminPaymentCorrection) {
+  return userAxios.put<AdminPaymentEntry>(`${API_URL}/admin/payments/${encodeURIComponent(orderId)}`, body).then((r) => r.data);
 }
 
 export interface AdminAddPaymentResult {

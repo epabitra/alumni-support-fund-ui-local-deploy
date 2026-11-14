@@ -17,6 +17,7 @@ import '../styles/events.css';
 import { getEventExpenses, getEvents } from '../app/modules/events/core/_requests';
 import type { FundEventDTO, FundEventExpenseDTO } from '../app/modules/events/core/_models';
 import { RefundModal } from '../components/events/EventModals';
+import { EditPaymentModal } from '../components/admin/EditPaymentModal';
 
 const PAYMENT_METHODS: { value: string; label: string }[] = [
   { value: 'UPI', label: 'UPI' },
@@ -148,6 +149,7 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged
   const [query, setQuery] = useState<TableQuery & { extra: { method: string; fund: string }; reload: number }>({ ...DEFAULT_QUERY, extra: NO_EXTRA, reload: 0 });
   const [events, setEvents] = useState<FundEventDTO[]>([]);
   const [refunding, setRefunding] = useState<PublicPaymentHistoryDTO | null>(null);
+  const [editingOrder, setEditingOrder] = useState<string | null>(null);
   useEffect(() => {
     getEvents().then(setEvents).catch(() => {});
   }, []);
@@ -265,9 +267,15 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged
                       <td>{methodLabel(row.paymentMethod)}</td>
                       {isAdmin && (
                         <td>
-                          {row.orderId && (row.refundedAmount ?? 0) < row.amount && (
-                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRefunding(row)}>Refund</button>
-                          )}
+                          <div className="table-actions">
+                            {row.orderId && row.editable && (
+                              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setEditingOrder(row.orderId!)}>Edit</button>
+                            )}
+                            {row.orderId && (row.refundedAmount ?? 0) < row.amount && (
+                              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRefunding(row)}>Refund</button>
+                            )}
+                          </div>
+                          {row.correctedAt && <small className="event-refunded">edited</small>}
                         </td>
                       )}
                     </tr>
@@ -279,6 +287,17 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged
           <DataTablePagination query={query} totalElements={totalElements} totalPages={totalPages} loading={loading} onChange={update} />
           <p className="dt-note">Names and emails are searchable only for contributors who chose to show their details publicly.</p>
         </>
+      )}
+      {editingOrder && (
+        <EditPaymentModal
+          orderId={editingOrder}
+          onClose={() => setEditingOrder(null)}
+          onSaved={() => {
+            setEditingOrder(null);
+            setQuery((q) => ({ ...q, reload: q.reload + 1 }));
+            onChanged();
+          }}
+        />
       )}
       {refunding && (
         <RefundModal

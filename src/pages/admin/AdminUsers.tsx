@@ -1,353 +1,238 @@
-import React, { useState, useEffect } from 'react';
-import { getAllUsers, updateUser, AdminUserDTO } from '../../app/modules/auth/core/_user_requests';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getAllUsers, updateUser, type AdminUserDTO } from '../../app/modules/auth/core/_user_requests';
 import { isValidPhone } from '../../app/modules/auth/core/phone';
 import { ROLE_USER, ROLE_ADMIN, ROLE_SERVICE_CENTER, ROLE_VERIFIER, ROLE_AUDITOR } from '../../app/Constants';
 import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import { DataTablePagination, DataTableToolbar, SortHeader, type TableQuery } from '../../components/DataTable';
+import { formatPhone, initials, memberName } from '../../components/admin/MemberPicker';
+import { formatRupees } from '../../components/admin/amountWords';
 import '../../styles/professional-ui.css';
+import '../../styles/payment.css';
 import './admin.css';
+import '../../components/admin/admin-payments.css';
 
+const ROLES = [
+  { value: ROLE_USER, label: 'User' },
+  { value: ROLE_SERVICE_CENTER, label: 'Service Center' },
+  { value: ROLE_VERIFIER, label: 'Verifier' },
+  { value: ROLE_AUDITOR, label: 'Auditor' },
+  { value: ROLE_ADMIN, label: 'Admin' }
+];
+
+const ROLE_BADGE: Record<string, string> = {
+  [ROLE_ADMIN]: 'badge badge-danger',
+  [ROLE_SERVICE_CENTER]: 'badge badge-info',
+  [ROLE_VERIFIER]: 'badge badge-success',
+  [ROLE_AUDITOR]: 'badge badge-warning'
+};
+
+const roleLabel = (role: string) => ROLES.find((r) => r.value === role)?.label ?? role;
+const formatDay = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+
+type Query = TableQuery & { role: string; status: string; reload: number };
+const DEFAULT_QUERY: Query = { page: 0, size: 25, search: '', from: '', to: '', sortBy: 'joined', sortDir: 'desc', role: '', status: '', reload: 0 };
+
+/** Users with search (name, mobile, email), role / status / joined-date filters, sorting and paging, all on the server */
 const AdminUsers: React.FC = () => {
-  const [users, setUsers] = useState<AdminUserDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
-  const [editingUserId, setEditingUserId] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [query, setQuery] = useState<Query>(DEFAULT_QUERY);
+  const [rows, setRows] = useState<AdminUserDTO[]>([]);
   const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [editing, setEditing] = useState<AdminUserDTO | null>(null);
+  const [saving, setSaving] = useState(false);
+  const requestId = useRef(0);
 
-  const availableRoles = [
-    { value: ROLE_USER, label: 'User' },
-    { value: ROLE_SERVICE_CENTER, label: 'Service Center' },
-    { value: ROLE_VERIFIER, label: 'Verifier' },
-    { value: ROLE_AUDITOR, label: 'Auditor' },
-    { value: ROLE_ADMIN, label: 'Admin' },
-  ];
+  const update = (patch: Partial<Query>) => setQuery((q) => ({ ...q, ...patch }));
+  const onSort = (sortBy: string, sortDir: 'asc' | 'desc') => update({ sortBy, sortDir, page: 0 });
 
   useEffect(() => {
-    loadUsers();
-  }, [page]);
+    if (query.from && query.to && query.from > query.to) return;
+    const id = ++requestId.current;
+    setLoading(true);
+    getAllUsers(query.page, query.size, {
+      search: query.search, role: query.role, status: query.status, from: query.from, to: query.to,
+      sortBy: query.sortBy as 'name' | 'email' | 'joined', sortDir: query.sortDir
+    })
+      .then((res) => {
+        if (id !== requestId.current) return;
+        setRows(res.data.content);
+        setTotalElements(res.data.totalElements);
+        setTotalPages(res.data.totalPages || Math.ceil(res.data.totalElements / query.size));
+        setError('');
+      })
+      .catch((e) => id === requestId.current && setError(e?.response?.data?.message || 'Failed to load users.'))
+      .finally(() => id === requestId.current && setLoading(false));
+  }, [JSON.stringify(query)]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadUsers = async () => {
+  const toggleRole = (role: string, checked: boolean) => {
+    if (!editing) return;
+    const current = editing.authorities ?? [];
+    setEditing({ ...editing, authorities: checked ? Array.from(new Set([...current, role])) : current.filter((r) => r !== role) });
+  };
+
+  const save = async () => {
+    if (!editing) return;
+    setError('');
+    setSuccess('');
+    if (!editing.authorities?.length) return setError('A user must have at least one role.');
+    if (editing.phone?.trim() && !isValidPhone(editing.phone)) {
+      return setError('Please enter a valid mobile number. Outside India, start with the country code, like +1.');
+    }
+    setSaving(true);
     try {
-      setLoading(true);
-      setError('');
-      const response = await getAllUsers(page, 20);
-      let filtered = response.data.content;
-
-      // Client-side search filtering on current page
-      if (searchTerm.trim()) {
-        const query = searchTerm.trim().toLowerCase();
-        filtered = filtered.filter((user) => (
-          user.firstName?.toLowerCase().includes(query) ||
-          user.lastName?.toLowerCase().includes(query) ||
-          user.email?.toLowerCase().includes(query) ||
-          user.phone?.includes(query) ||
-          user.login?.toLowerCase().includes(query)
-        ));
-      }
-
-      setUsers(filtered);
-      setTotalPages(response.data.totalPages);
-      setTotalElements(response.data.totalElements);
+      await updateUser({ ...editing, phone: editing.phone?.trim() ?? null });
+      setSuccess(`Saved ${memberName(editing)}.`);
+      setEditing(null);
+      update({ reload: query.reload + 1 });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load users');
+      setError(err?.response?.data?.message || 'Failed to update the user.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleEdit = (user: AdminUserDTO) => {
-    setEditingUserId(user.id!);
-    setSuccess('');
-    setError('');
-  };
-
-  const handleCancel = () => {
-    setEditingUserId(null);
-    setError('');
-    setSuccess('');
-  };
-
-  const handleRoleChange = (userId: number, role: string, checked: boolean) => {
-    setUsers(users.map(user => {
-      if (user.id === userId) {
-        const currentRoles = user.authorities || [];
-        let newRoles: string[];
-        
-        if (checked) {
-          // Add role if not already present
-          newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role];
-        } else {
-          // Remove role
-          newRoles = currentRoles.filter(r => r !== role);
-        }
-        
-        return { ...user, authorities: newRoles };
-      }
-      return user;
-    }));
-  };
-
-  const handlePhoneChange = (userId: number, phone: string) => {
-    setUsers(users.map((user) => (user.id === userId ? { ...user, phone } : user)));
-  };
-
-  const handleSave = async (user: AdminUserDTO) => {
-    try {
-      setError('');
-      setSuccess('');
-      
-      // Ensure at least one role is selected
-      if (!user.authorities || user.authorities.length === 0) {
-        setError('User must have at least one role');
-        return;
-      }
-
-      if (user.phone?.trim() && !isValidPhone(user.phone)) {
-        setError('Please enter a valid mobile number. Outside India, start with the country code, like +1.');
-        return;
-      }
-
-      await updateUser({ ...user, phone: user.phone?.trim() ?? null });
-      setSuccess(`User updated successfully: ${user.firstName} ${user.lastName}`);
-      setEditingUserId(null);
-      // Reload current page to get fresh data
-      await loadUsers();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update user');
-    }
-  };
-
-  // Users are already filtered in loadUsers, but we keep this for display
-  const filteredUsers = users;
-
-  const getRoleBadgeClass = (role: string) => {
-    switch (role) {
-      case ROLE_ADMIN:
-        return 'badge badge-danger';
-      case ROLE_SERVICE_CENTER:
-        return 'badge badge-info';
-      case ROLE_VERIFIER:
-        return 'badge badge-success';
-      case ROLE_AUDITOR:
-        return 'badge badge-warning';
-      default:
-        return 'badge';
-    }
-  };
-
-  const getRoleLabel = (role: string) => {
-    const roleObj = availableRoles.find(r => r.value === role);
-    return roleObj ? roleObj.label : role;
-  };
-
-  if (loading) {
-    return (
-      <div className="admin-container">
-        <RoleBasedNav />
-        <main className="admin-main">
-          <LoadingSpinner />
-        </main>
-      </div>
-    );
-  }
+  const filtered = !!(query.search || query.from || query.to || query.role || query.status);
 
   return (
     <div className="admin-container">
       <RoleBasedNav />
       <main className="admin-main">
         <PageHeader
-          title="User Management"
-          subtitle="View and manage all users and their roles in the system"
-          breadcrumbs={[
-            { label: 'Dashboard', path: '/dashboard' },
-            { label: 'Admin' },
-            { label: 'Users' }
-          ]}
+          title="Users"
+          subtitle="Find members by name, mobile or email, manage their roles and mobile number, and record payments for them."
+          breadcrumbs={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Admin' }, { label: 'Users' }]}
         />
 
-        {error && (
-          <div className="alert alert-danger" role="alert">
-            {error}
-          </div>
-        )}
+        {error && <div className="alert alert-danger" role="alert">{error}</div>}
+        {success && <div className="alert alert-success" role="status">{success}</div>}
 
-        {success && (
-          <div className="alert alert-success" role="alert">
-            {success}
-          </div>
-        )}
-
-        {/* Search */}
-        <div className="filters-container">
-          <div className="filters-row">
-            <div className="form-group">
-              <label htmlFor="search" className="form-label">Search Users</label>
-              <div className="search-input-group">
-                <input
-                  id="search"
-                  type="text"
-                  className="form-input"
-                  placeholder="Search by name, email, or login..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    // Reset to first page when searching
-                    if (page !== 0) {
-                      setPage(0);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      loadUsers();
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Users Table */}
         <div className="admin-card">
-          <h2>All Users ({totalElements > 0 ? totalElements : filteredUsers.length})</h2>
-          
-          {filteredUsers.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">👥</div>
-              <h3>No users found</h3>
-              <p>{searchTerm ? 'Try adjusting your search criteria' : 'No users in the system'}</p>
+          <div className="users-head">
+            <h2>{filtered ? 'Matching users' : 'All users'} <span className="users-count">{totalElements}</span></h2>
+          </div>
+          <DataTableToolbar
+            query={query}
+            onChange={update}
+            searchPlaceholder="Name, mobile or email"
+            hasExtraFilters={!!(query.role || query.status)}
+            onClear={() => setQuery((q) => ({ ...DEFAULT_QUERY, size: q.size, reload: q.reload }))}
+          >
+            <div className="dt-field">
+              <label className="dt-label" htmlFor="users-role">Role</label>
+              <select id="users-role" className="dt-input custom-select" value={query.role} onChange={(e) => update({ role: e.target.value, page: 0 })}>
+                <option value="">All roles</option>
+                {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
             </div>
-          ) : (
-            <div className="table-wrapper">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Login</th>
-                    <th>Status</th>
-                    <th>Roles</th>
-                    <th style={{ textAlign: 'center' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id}>
+            <div className="dt-field">
+              <label className="dt-label" htmlFor="users-status">Status</label>
+              <select id="users-status" className="dt-input custom-select" value={query.status} onChange={(e) => update({ status: e.target.value, page: 0 })}>
+                <option value="">Any</option>
+                <option value="active">Active</option>
+                <option value="inactive">Not verified / inactive</option>
+              </select>
+            </div>
+          </DataTableToolbar>
+          <p className="dt-note users-period-note">Period, From and To filter by the date the user joined.</p>
+
+          <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
+            <table className="payment-history-table users-table">
+              <thead>
+                <tr>
+                  <SortHeader label="Member" field="name" query={query} onSort={onSort} firstDir="asc" />
+                  <th>Mobile</th>
+                  <th>Roles</th>
+                  <th>Status</th>
+                  <SortHeader label="Joined" field="joined" query={query} onSort={onSort} />
+                  <th>Contributed</th>
+                  <th><span className="visually-hidden">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr><td colSpan={7} className="dt-empty">{loading ? 'Loading…' : filtered ? 'No users match these filters.' : 'No users yet.'}</td></tr>
+                ) : rows.map((u) => {
+                  const isEditing = editing?.id === u.id;
+                  const row = isEditing ? editing! : u;
+                  const name = memberName(u);
+                  return (
+                    <tr key={u.id} className={isEditing ? 'users-editing' : ''}>
                       <td>
-                        {user.firstName} {user.lastName}
-                      </td>
-                      <td>{user.email}</td>
-                      <td>
-                        {editingUserId === user.id ? (
-                          <input
-                            type="tel"
-                            className="form-input"
-                            style={{ minWidth: '10rem' }}
-                            placeholder="98765 43210"
-                            aria-label={`Phone number of ${user.firstName} ${user.lastName}`}
-                            value={user.phone ?? ''}
-                            onChange={(e) => handlePhoneChange(user.id!, e.target.value)}
-                          />
-                        ) : user.phone ? (
-                          <span style={{ whiteSpace: 'nowrap' }}>{user.phone}</span>
-                        ) : (
-                          <span className="badge">Not added</span>
-                        )}
-                      </td>
-                      <td>{user.login}</td>
-                      <td>
-                        <span className={user.activated ? 'status-badge verified' : 'status-badge rejected'}>
-                          {user.activated ? 'Active' : 'Inactive'}
-                        </span>
+                        <div className="contributor-cell">
+                          <span className="mp-avatar" aria-hidden>{initials(name)}</span>
+                          <div className="contributor-text">
+                            <span className="contributor-name">{name}</span>
+                            <small className="contributor-email">{u.email}</small>
+                          </div>
+                        </div>
                       </td>
                       <td>
-                        {editingUserId === user.id ? (
+                        {isEditing ? (
+                          <input type="tel" className="form-input users-phone-input" placeholder="98765 43210"
+                            aria-label={`Mobile number of ${name}`} value={row.phone ?? ''}
+                            onChange={(e) => setEditing({ ...row, phone: e.target.value })} />
+                        ) : u.phone ? <span className="users-nowrap">{formatPhone(u.phone)}</span> : <span className="badge">Not added</span>}
+                      </td>
+                      <td>
+                        {isEditing ? (
                           <div className="role-checkboxes">
-                            {availableRoles.map((role) => (
-                              <label key={role.value} className="role-checkbox-label">
-                                <input
-                                  type="checkbox"
-                                  checked={user.authorities?.includes(role.value) || false}
-                                  onChange={(e) => handleRoleChange(user.id!, role.value, e.target.checked)}
-                                  className="role-checkbox"
-                                />
-                                <span>{role.label}</span>
+                            {ROLES.map((r) => (
+                              <label key={r.value} className="role-checkbox-label">
+                                <input type="checkbox" className="role-checkbox" checked={row.authorities?.includes(r.value) || false}
+                                  onChange={(e) => toggleRole(r.value, e.target.checked)} />
+                                <span>{r.label}</span>
                               </label>
                             ))}
                           </div>
                         ) : (
                           <div className="role-badges-group">
-                            {user.authorities && user.authorities.length > 0 ? (
-                              user.authorities.map((role) => (
-                                <span key={role} className={getRoleBadgeClass(role)}>
-                                  {getRoleLabel(role)}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="badge">No roles</span>
-                            )}
+                            {u.authorities?.length
+                              ? u.authorities.map((r) => <span key={r} className={ROLE_BADGE[r] ?? 'badge'}>{roleLabel(r)}</span>)
+                              : <span className="badge">No roles</span>}
                           </div>
                         )}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        {editingUserId === user.id ? (
-                          <div className="table-actions">
-                            <button
-                              className="btn btn-sm btn-primary"
-                              onClick={() => handleSave(user)}
-                            >
-                              Save
-                            </button>
-                            <button
-                              className="btn btn-sm btn-secondary"
-                              onClick={handleCancel}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => handleEdit(user)}
-                          >
-                            Edit
-                          </button>
-                        )}
+                      <td>
+                        <span className={u.activated ? 'status-badge verified' : 'status-badge rejected'}>{u.activated ? 'Active' : 'Not verified'}</span>
+                      </td>
+                      <td className="users-nowrap">{formatDay(u.createdDate)}</td>
+                      <td className="users-nowrap">
+                        {u.contributionCount ? (
+                          <>
+                            <strong>{formatRupees(u.totalContributed ?? 0)}</strong>
+                            <small className="users-sub">{u.contributionCount} payment{u.contributionCount === 1 ? '' : 's'} · last {formatDay(u.lastContributionDate)}</small>
+                          </>
+                        ) : <span className="users-muted">—</span>}
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          {isEditing ? (
+                            <>
+                              <button type="button" className="btn btn-sm btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+                              <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setEditing(null); setError(''); }} disabled={saving}>Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button type="button" className="btn btn-sm btn-secondary" disabled={!u.activated}
+                                title={u.activated ? undefined : 'Users can be edited after they verify their email'}
+                                onClick={() => { setEditing({ ...u }); setSuccess(''); setError(''); }}>Edit</button>
+                              <Link to={`/admin/add-payment?user=${encodeURIComponent(u.email)}`} className="btn btn-sm btn-secondary">Add payment</Link>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button 
-                className="pagination-button"
-                onClick={() => setPage(p => Math.max(0, p - 1))} 
-                disabled={page === 0}
-              >
-                Previous
-              </button>
-              <span className="pagination-info">
-                Page {page + 1} of {totalPages} ({totalElements} total users)
-              </span>
-              <button 
-                className="pagination-button"
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
-                disabled={page >= totalPages - 1}
-              >
-                Next
-              </button>
-            </div>
-          )}
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <DataTablePagination query={query} totalElements={totalElements} totalPages={totalPages} loading={loading} onChange={update} />
         </div>
       </main>
     </div>

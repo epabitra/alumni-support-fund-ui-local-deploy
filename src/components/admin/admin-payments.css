@@ -1,0 +1,684 @@
+/* Record a payment page, member picker, amount field and edit-payment dialog */
+
+/* ---------------- Layout ---------------- */
+.ap-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .ap-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ap-main,
+.ap-recent {
+  margin: 0;
+}
+
+/* ---------------- Steps ---------------- */
+.ap-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ap-step {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.85rem;
+}
+
+.ap-step-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.ap-step-body {
+  min-width: 0;
+}
+
+.ap-label {
+  display: block;
+  margin: 0.25rem 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ap-date {
+  max-width: 14rem;
+  margin: 0;
+}
+
+/* ---------------- Amount ---------------- */
+.ap-amount-box {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 22rem;
+  padding: 0 0.9rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ap-amount-box:focus-within {
+  border-color: #d4a017;
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.18);
+}
+
+.ap-amount-box.invalid {
+  border-color: #dc2626;
+}
+
+.ap-amount-box span {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.ap-amount-box input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.ap-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0.25rem;
+}
+
+.ap-chip {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ap-chip:hover,
+.ap-chip.active {
+  border-color: #d4a017;
+  background: #fef9e7;
+  color: #92400e;
+}
+
+.ap-words {
+  margin: 0.35rem 0 0;
+  min-height: 1.2em;
+  font-size: 0.875rem;
+  color: #475569;
+  font-style: italic;
+}
+
+.ap-words.error {
+  color: #b91c1c;
+  font-style: normal;
+}
+
+.ap-hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: #92400e;
+}
+
+/* ---------------- Fund cards ---------------- */
+.ap-funds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+  gap: 0.6rem;
+}
+
+.ap-fund {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ap-fund:hover {
+  border-color: #f0c75e;
+}
+
+.ap-fund.selected {
+  border-color: #d4a017;
+  background: #fffbeb;
+}
+
+.ap-fund input {
+  margin-top: 0.2rem;
+  accent-color: #b8860b;
+}
+
+.ap-fund-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ap-fund-text strong {
+  color: #0f172a;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.ap-fund-text small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+/* ---------------- Submit ---------------- */
+.ap-submit-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ap-summary {
+  margin: 0;
+  flex: 1 1 16rem;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.ap-submit {
+  min-width: 12rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* ---------------- Done ---------------- */
+.ap-done {
+  padding: 1.5rem 0.5rem;
+  text-align: center;
+}
+
+.ap-done-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.ap-done h2 {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 1.75rem;
+  color: #0f172a;
+}
+
+.ap-done-line {
+  margin: 0;
+  color: #334155;
+}
+
+.ap-done-ref {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  overflow-wrap: anywhere;
+}
+
+.ap-done-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+/* ---------------- Recent entries ---------------- */
+.ap-recent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ap-recent-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.ap-recent-head a {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #996c00;
+  text-decoration: none;
+}
+
+.ap-recent-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ap-recent-list li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.7rem 0.35rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ap-recent-list li.just-added {
+  background: #f0fdf4;
+  border-radius: 0.6rem;
+}
+
+.ap-recent-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ap-recent-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+.ap-recent-text small {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.ap-recent-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ap-recent-amount {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.ap-recent-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.ap-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #996c00;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ap-link:hover {
+  text-decoration: underline;
+}
+
+.ap-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.ap-more {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.ap-empty {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.ap-note {
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+}
+
+.ap-note.ok {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.ap-note.warn {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+/* ---------------- Edit dialog ---------------- */
+.ap-changes {
+  margin: 0.25rem 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 0.875rem;
+  color: #78350f;
+}
+
+.ap-changes ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ap-history {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.ap-history summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ap-history ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.ap-history li span {
+  display: block;
+}
+
+.ap-receipt-modal {
+  width: min(56rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+/* ---------------- Member picker ---------------- */
+.mp {
+  position: relative;
+}
+
+.mp-input {
+  margin: 0;
+}
+
+.mp-input.invalid {
+  border-color: #dc2626;
+}
+
+.mp-list {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 20rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.mp-option {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.mp-option.active {
+  background: #fef9e7;
+}
+
+.mp-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mp-option-text strong {
+  color: #0f172a;
+  font-size: 0.92rem;
+}
+
+.mp-option-text small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.mp-option mark {
+  padding: 0;
+  background: #fde68a;
+  color: inherit;
+}
+
+.mp-status {
+  padding: 0.7rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.mp-status.error {
+  color: #b91c1c;
+}
+
+.mp-tag {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.mp-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  color: #78350f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.mp-selected {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  border: 1.5px solid #d4a017;
+  border-radius: 0.85rem;
+  background: #fffbeb;
+}
+
+.mp-selected .mp-avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 0.95rem;
+}
+
+.mp-selected-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mp-selected-text strong {
+  color: #0f172a;
+}
+
+.mp-selected-text span {
+  overflow-wrap: anywhere;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.mp-selected-text small {
+  color: #92400e;
+  font-size: 0.78rem;
+}
+
+.payment-history-table .table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* ---------------- Users table ---------------- */
+.users-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.users-count {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.85rem;
+}
+
+.users-period-note {
+  margin: -0.5rem 0 0.75rem;
+}
+
+.users-table td {
+  vertical-align: middle;
+}
+
+.users-nowrap {
+  white-space: nowrap;
+}
+
+.users-sub {
+  display: block;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.users-muted {
+  color: #94a3b8;
+}
+
+.users-phone-input {
+  min-width: 10rem;
+  margin: 0;
+}
+
+.users-editing {
+  background: #fffbeb;
+}
+
+.users-table .role-badges-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.users-table .table-actions {
+  flex-wrap: nowrap;
+}
+
+/* Undo the general card / input styles inside these components */
+.admin-card .ap-done h2,
+.admin-card .ap-recent-head h2,
+.admin-card .users-head h2 {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.admin-card .ap-done h2 {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 1.75rem;
+}
+
+.admin-card .users-head h2 {
+  margin-bottom: 1rem;
+}
+
+.ap-amount-box input,
+.ap-amount-box input:focus,
+.ap-amount-box input:hover {
+  height: auto;
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  outline: none;
+  background: transparent !important;
+}
+
+.users-table .contributor-email {
+  font-family: inherit;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .ap-submit {
+    width: 100%;
+  }
+
+  .ap-done-actions .btn {
+    width: 100%;
+  }
+}
