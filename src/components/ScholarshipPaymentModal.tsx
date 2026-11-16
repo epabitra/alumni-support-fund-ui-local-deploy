@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ReceiptFilePicker, validateReceiptFiles } from './ScholarshipReceipts';
+import DateInput from './DateInput';
 
 export function formatINR(value: number | undefined | null): string {
   if (value == null || Number.isNaN(value)) return '—';
@@ -178,10 +179,9 @@ const ScholarshipPaymentModal: React.FC<ScholarshipPaymentModalProps> = ({
               <>
                 <div className="form-group">
                   <label className="form-label required" htmlFor="scholarship-paid-on">Payment date</label>
-                  <input
+                  <DateInput
                     id="scholarship-paid-on"
                     className="form-input"
-                    type="date"
                     min="2000-01-01"
                     max={today}
                     value={paidOn}

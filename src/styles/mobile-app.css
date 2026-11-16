@@ -807,3 +807,65 @@ input[type='month'] {
     font-size: 0.75rem;
   }
 }
+
+/* ---------------- Date fields: "Select date" hint and calendar icon on iPhone ---------------- */
+.date-input {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.date-input:has(> .ap-date) {
+  max-width: 14rem;
+}
+
+.date-input-hint,
+.date-input-icon {
+  display: none;
+}
+
+.ios-dates .date-input > input {
+  padding-right: 2.4rem !important;
+}
+
+.ios-dates .date-input.is-empty .date-input-hint {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 0.8rem;
+  transform: translateY(-50%);
+  max-width: calc(100% - 3.2rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.ios-dates .date-input-icon {
+  display: block;
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* ---------------- Card toggle: chevron instead of + ---------------- */
+table[data-rt-cards] tr[data-rt-more]::after {
+  content: '' !important;
+  background-color: #fef3c7 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2392400e' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 1.05rem !important;
+  transition: transform 0.2s ease, background-color 0.2s ease !important;
+}
+
+table[data-rt-cards] tr[data-rt-more][data-rt-open]::after {
+  transform: rotate(180deg);
+  background-color: #fde68a !important;
+}

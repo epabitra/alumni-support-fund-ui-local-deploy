@@ -8,6 +8,7 @@ import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import '../service-center/service-center.css';
+import DateInput from '../../components/DateInput';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic'];
@@ -356,10 +357,9 @@ const RegisterStudent: React.FC = () => {
 
               <div className="form-group">
                 <label htmlFor="dateOfBirth">Date of Birth *</label>
-                <input
+                <DateInput
                   id="dateOfBirth"
                   name="dateOfBirth"
-                  type="date"
                   value={formik.values.dateOfBirth}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}

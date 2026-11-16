@@ -23,6 +23,7 @@ import '../../styles/professional-ui.css';
 import '../../styles/events.css';
 import './admin.css';
 import '../../components/admin/admin-payments.css';
+import DateInput from '../../components/DateInput';
 
 /** What was just recorded, for the confirmation panel */
 interface Done {
@@ -212,7 +213,7 @@ const AdminAddPayment: React.FC = () => {
                   <span className="ap-step-no" aria-hidden>4</span>
                   <div className="ap-step-body">
                     <label className="ap-label" htmlFor="ap-date">Received on</label>
-                    <input id="ap-date" type="date" className="form-input ap-date" value={paidOn} max={todayISO()} disabled={busy}
+                    <DateInput id="ap-date" className="form-input ap-date" value={paidOn} max={todayISO()} disabled={busy}
                       onChange={(e) => setPaidOn(e.target.value)} />
                   </div>
                 </div>

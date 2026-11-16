@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useState } from 'react';
 import './DataTable.css';
+import DateInput from './DateInput';
 
 export type SortDir = 'asc' | 'desc';
 
@@ -121,8 +122,7 @@ export const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
       </div>
       <div className="dt-field">
         <label className="dt-label">From</label>
-        <input
-          type="date"
+        <DateInput
           className="dt-input custom-input"
           value={query.from}
           max={query.to || undefined}
@@ -131,8 +131,7 @@ export const DataTableToolbar: React.FC<DataTableToolbarProps> = ({
       </div>
       <div className="dt-field">
         <label className="dt-label">To</label>
-        <input
-          type="date"
+        <DateInput
           className="dt-input custom-input"
           value={query.to}
           min={query.from || undefined}

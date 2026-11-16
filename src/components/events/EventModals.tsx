@@ -16,6 +16,7 @@ import { ReceiptFilePicker, validateReceiptFiles } from '../ScholarshipReceipts'
 import { addEventImages } from '../../app/modules/events/core/_requests';
 import { IMAGE_ACCEPT, MAX_EVENT_IMAGES, prepareEventImages } from './EventImages';
 import { PlanEditor, planItemsFrom, planRowsFrom, planTotal, parseOptional, qtyTimesPrice, type PlanRow } from './EventPlan';
+import DateInput from '../DateInput';
 
 const GENERAL = '';
 
@@ -195,11 +196,11 @@ export const EventFormModal: React.FC<{
         </div>
         <div className="form-group">
           <label className="form-label required" htmlFor="event-start">Start date</label>
-          <input id="event-start" type="date" className="form-input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <DateInput id="event-start" className="form-input" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </div>
         <div className="form-group">
           <label className="form-label required" htmlFor="event-end">Last day for donations</label>
-          <input id="event-end" type="date" className="form-input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <DateInput id="event-end" className="form-input" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
       </div>
       <div className="form-help">
@@ -389,7 +390,7 @@ export const ExpenseModal: React.FC<{
         </div>
         <div className="form-group">
           <label className="form-label required" htmlFor="expense-date">Paid on</label>
-          <input id="expense-date" type="date" className="form-input" value={paidOn} max={todayLocalISO()} onChange={(e) => setPaidOn(e.target.value)} />
+          <DateInput id="expense-date" className="form-input" value={paidOn} max={todayLocalISO()} onChange={(e) => setPaidOn(e.target.value)} />
         </div>
       </div>
       <div className="form-group">
@@ -794,7 +795,7 @@ export const RefundModal: React.FC<{
         </div>
         <div className="form-group">
           <label className="form-label required" htmlFor="refund-date">Refunded on</label>
-          <input id="refund-date" type="date" className="form-input" value={refundedOn} max={todayLocalISO()} onChange={(e) => setRefundedOn(e.target.value)} />
+          <DateInput id="refund-date" className="form-input" value={refundedOn} max={todayLocalISO()} onChange={(e) => setRefundedOn(e.target.value)} />
         </div>
       </div>
       <div className="form-group">

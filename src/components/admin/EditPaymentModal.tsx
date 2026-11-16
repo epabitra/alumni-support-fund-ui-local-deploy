@@ -12,6 +12,7 @@ import { MemberPicker, memberName } from './MemberPicker';
 import { AmountField, FundChoice, amountError, formatDay, istDay, todayISO } from './PaymentFields';
 import { formatRupees, parseRupees } from './amountWords';
 import './admin-payments.css';
+import DateInput from '../DateInput';
 
 const REASONS = ['Wrong amount typed', 'Wrong member chosen', 'Wrong event / fund', 'Wrong date'];
 
@@ -130,7 +131,7 @@ export const EditPaymentModal: React.FC<{
           </div>
           <div className="form-group">
             <label className="form-label required" htmlFor="ep-date">Received on</label>
-            <input id="ep-date" type="date" className="form-input ap-date" value={paidOn} max={todayISO()} disabled={busy}
+            <DateInput id="ep-date" className="form-input ap-date" value={paidOn} max={todayISO()} disabled={busy}
               onChange={(e) => setPaidOn(e.target.value)} />
           </div>
           {changes.length > 0 && (

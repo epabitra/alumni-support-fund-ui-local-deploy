@@ -5,6 +5,7 @@ import RoleBasedNav from '../../components/RoleBasedNav';
 import PageHeader from '../../components/PageHeader';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import './admin.css';
+import DateInput from '../../components/DateInput';
 
 type TextFieldKey = 'parentName' | 'parentOccupation' | 'parentPhone' | 'parentEmail'
   | 'district' | 'state' | 'pincode' | 'phone' | 'email';
@@ -302,10 +303,9 @@ const AdminStudents: React.FC = () => {
                   </div>
                   <div className="form-group">
                     <label className="form-label required" htmlFor="edit-dateOfBirth">Date of Birth</label>
-                    <input
+                    <DateInput
                       id="edit-dateOfBirth"
                       className="form-input"
-                      type="date"
                       value={formData.dateOfBirth || ''}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                       required
