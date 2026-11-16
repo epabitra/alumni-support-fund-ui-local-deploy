@@ -130,6 +130,13 @@
   border-top: 1px solid #e2e8f0;
 }
 
+.dt-pagination-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
 .dt-pagination-info {
   font-size: 0.875rem;
   color: #64748b;

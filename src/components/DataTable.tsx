@@ -183,30 +183,39 @@ interface DataTablePaginationProps {
   onChange: (patch: Partial<TableQuery>) => void;
 }
 
-/** "Showing x–y of z", rows per page and first / previous / next / last */
+/**
+ * "Showing x–y of z", rows per page and first / previous / next / last.
+ * Nothing when there are no results (the table says so); no page buttons when everything fits on one page.
+ */
 export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ query, totalElements, totalPages, loading, onChange }) => {
   const { page, size } = query;
-  const start = totalElements === 0 ? 0 : page * size + 1;
+  if (totalElements === 0) return null;
+  const start = page * size + 1;
   const end = Math.min((page + 1) * size, totalElements);
   const last = Math.max(totalPages - 1, 0);
+  const pages = Math.max(totalPages, 1);
   return (
     <div className="dt-pagination">
-      <span className="dt-pagination-info">
-        {totalElements === 0 ? 'No results' : `Showing ${start}–${end} of ${totalElements}`}
-      </span>
-      <div className="dt-pagination-controls">
-        <label className="dt-page-size">
-          Rows
-          <select className="dt-input custom-select" value={size} onChange={(e) => onChange({ size: Number(e.target.value), page: 0 })}>
-            {PAGE_SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </label>
-        <button type="button" onClick={() => onChange({ page: 0 })} disabled={page === 0 || loading} aria-label="First page">«</button>
-        <button type="button" onClick={() => onChange({ page: page - 1 })} disabled={page === 0 || loading}>Previous</button>
-        <span className="dt-page-number">Page {totalPages === 0 ? 0 : page + 1} of {totalPages}</span>
-        <button type="button" onClick={() => onChange({ page: page + 1 })} disabled={page >= last || loading}>Next</button>
-        <button type="button" onClick={() => onChange({ page: last })} disabled={page >= last || loading} aria-label="Last page">»</button>
+      <div className="dt-pagination-summary">
+        <span className="dt-pagination-info">Showing {start}–{end} of {totalElements}</span>
+        {(totalElements > PAGE_SIZE_OPTIONS[0] || size !== PAGE_SIZE_OPTIONS[0]) && (
+          <label className="dt-page-size">
+            Rows
+            <select className="dt-input custom-select" value={size} onChange={(e) => onChange({ size: Number(e.target.value), page: 0 })}>
+              {PAGE_SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
+        )}
       </div>
+      {pages > 1 && (
+        <div className="dt-pagination-controls">
+          <button type="button" className="dt-page-edge" onClick={() => onChange({ page: 0 })} disabled={page === 0 || loading} aria-label="First page">«</button>
+          <button type="button" onClick={() => onChange({ page: page - 1 })} disabled={page === 0 || loading}>Previous</button>
+          <span className="dt-page-number">Page {page + 1} of {pages}</span>
+          <button type="button" onClick={() => onChange({ page: page + 1 })} disabled={page >= last || loading}>Next</button>
+          <button type="button" className="dt-page-edge" onClick={() => onChange({ page: last })} disabled={page >= last || loading} aria-label="Last page">»</button>
+        </div>
+      )}
     </div>
   );
 };
