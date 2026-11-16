@@ -54,9 +54,12 @@ export interface ExpenseDetailsInput {
   unitPrice: number | null;
   purpose: string;
   paidOn: string;
+  /** New total; null keeps it. Only for an open event. */
+  amount?: number | null;
+  coverFromGeneral?: boolean;
 }
 
-/** Fix the details of a payment; the amount cannot change */
+/** Fix a recorded payment; a new total moves the difference back to or out of the event */
 export function updateEventExpenseDetails(eventId: number, expenseId: number, input: ExpenseDetailsInput) {
   return eventsAxios.patch<FundEventExpenseDTO>(`${ADMIN_EVENTS}/${eventId}/expenses/${expenseId}`, input).then((r) => r.data);
 }
@@ -150,6 +153,11 @@ export function transferMoney(fromEventId: number | null, toEventId: number | nu
 
 export function closeEvent(id: number, moves: FundMove[], note: string) {
   return eventsAxios.post<FundEventDTO>(`${ADMIN_EVENTS}/${id}/close`, { moves, note }).then((r) => r.data);
+}
+
+/** Open a closed or cancelled event again; bringBack moves the closing leftover back in */
+export function reopenEvent(id: number, reason: string, bringBack: boolean) {
+  return eventsAxios.post<FundEventDTO>(`${ADMIN_EVENTS}/${id}/reopen`, { reason, bringBack }).then((r) => r.data);
 }
 
 export function cancelEvent(id: number, note: string) {

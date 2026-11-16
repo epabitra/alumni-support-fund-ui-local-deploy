@@ -14,6 +14,7 @@ import {
   ExpenseModal,
   ModalShell,
   RefundModal,
+  ReopenEventModal,
   TransferModal
 } from '../components/events/EventModals';
 import { EventProgress, EventStatusBadge, eventDates, LEFTOVER_NOTE, EventText } from '../components/events/EventBits';
@@ -23,7 +24,7 @@ import { EventGallery, EventImageManager } from '../components/events/EventImage
 import { ShareEventButton } from '../components/events/ShareEvent';
 import { WhatsAppPledge } from '../components/events/WhatsAppPledge';
 import { EditPaymentModal } from '../components/admin/EditPaymentModal';
-import { EventReportCard, ExpenseDetailsModal, PlanVsActual, qtyTimesPrice, ReportModal, ReportPrompt } from '../components/events/EventPlan';
+import { EventReportCard, PlanVsActual, qtyTimesPrice, ReportModal, ReportPrompt } from '../components/events/EventPlan';
 import '../styles/dashboard.css';
 import '../styles/payment.css';
 import '../styles/events.css';
@@ -41,6 +42,7 @@ type Dialog =
   | { kind: 'expenseDetails'; expenseId: number }
   | { kind: 'report' }
   | { kind: 'editDonation'; orderId: string }
+  | { kind: 'reopen' }
   | null;
 
 function formatDateTime(iso?: string): string {
@@ -52,10 +54,12 @@ const KIND_LABEL: Record<string, string> = {
   MANUAL: 'Moved by admin',
   COVER_SHORTFALL: 'To cover a payment',
   LEFTOVER: 'Left over at closing',
-  CANCELLATION: 'Event cancelled'
+  CANCELLATION: 'Event cancelled',
+  REOPEN: 'Brought back when reopened'
 };
 
 function changeText(c: FundEventChangeDTO): string {
+  if (c.field === 'STATUS') return `Event reopened (it was ${c.oldValue === 'CANCELLED' ? 'cancelled' : 'closed'})`;
   if (c.field === 'BUDGET') return `Budget changed from ${formatINR(Number(c.oldValue))} to ${formatINR(Number(c.newValue))}`;
   const what = c.field === 'END_DATE' ? 'Last day for donations' : 'Start date';
   return `${what} changed from ${formatLocalDate(c.oldValue)} to ${formatLocalDate(c.newValue)}`;
@@ -218,6 +222,13 @@ const EventDetail: React.FC = () => {
           </div>
         )}
 
+        {isAdmin && finished && (
+          <div className="event-admin-bar" aria-label="Admin actions">
+            <span className="event-admin-bar-note">This event is {event.status === 'CANCELLED' ? 'cancelled' : 'closed'}. Reopen it to edit it or change its spending.</span>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setDialog({ kind: 'reopen' })}>Reopen event</button>
+          </div>
+        )}
+
         {isAdmin && (
           <section className="payment-card" aria-labelledby="event-images-title">
             <h2 id="event-images-title">Banner images</h2>
@@ -272,7 +283,7 @@ const EventDetail: React.FC = () => {
                           </div>
                         )}
                         {isAdmin && event.status !== 'CANCELLED' && (
-                          <button type="button" className="btn btn-secondary btn-sm event-add-bills" onClick={() => setDialog({ kind: 'expenseDetails', expenseId: x.id })}>Edit details</button>
+                          <button type="button" className="btn btn-secondary btn-sm event-add-bills" onClick={() => setDialog({ kind: 'expenseDetails', expenseId: x.id })}>Edit</button>
                         )}
                         <ReceiptList
                           receipts={x.receipts}
@@ -408,8 +419,11 @@ const EventDetail: React.FC = () => {
             onSaved={(updated) => { setEvent(updated); setDialog(null); setNotice('Report saved. Members can see it at the top of this page.'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
         )}
         {dialog?.kind === 'expenseDetails' && event.expenses.find((x) => x.id === dialog.expenseId) && (
-          <ExpenseDetailsModal event={event} expense={event.expenses.find((x) => x.id === dialog.expenseId)!}
-            onClose={() => setDialog(null)} onSaved={() => done('Payment details saved.')} />
+          <ExpenseModal event={event} generalAvailable={general} expense={event.expenses.find((x) => x.id === dialog.expenseId)!}
+            onClose={() => setDialog(null)} onSaved={() => done('Spending updated.')} />
+        )}
+        {dialog?.kind === 'reopen' && (
+          <ReopenEventModal event={event} onClose={() => setDialog(null)} onSaved={() => done('The event is open again.')} />
         )}
         {dialog?.kind === 'bills' && (
           <AddBillsModal eventId={event.id} expenseId={dialog.expenseId}

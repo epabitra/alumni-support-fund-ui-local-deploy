@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from 'react';
-import type { FundEventDTO } from '../../app/modules/events/core/_models';
+import type { FundEventDTO, FundEventExpenseDTO } from '../../app/modules/events/core/_models';
 import {
   addEventExpense,
   cancelEvent,
   closeEvent,
   createEvent,
   recordRefund,
+  reopenEvent,
   transferMoney,
-  updateEvent
+  updateEvent,
+  updateEventExpenseDetails
 } from '../../app/modules/events/core/_requests';
 import { formatINR, todayLocalISO } from '../ScholarshipPaymentModal';
 import { ReceiptFilePicker, validateReceiptFiles } from '../ScholarshipReceipts';
@@ -233,21 +235,30 @@ export const EventFormModal: React.FC<{
 
 // ------------------------------------------------------------------ spending
 
+/** Record spending, or (with `expense`) edit recorded spending with the same fields */
 export const ExpenseModal: React.FC<{
   event: FundEventDTO;
   generalAvailable: number | null;
+  /** Edit this payment instead of recording a new one */
+  expense?: FundEventExpenseDTO;
   onSaved: () => void;
   onClose: () => void;
-}> = ({ event, generalAvailable, onSaved, onClose }) => {
+}> = ({ event, generalAvailable, expense, onSaved, onClose }) => {
+  const editing = !!expense;
   const items = event.items ?? [];
-  const [itemId, setItemId] = useState(items.length ? String(items[0].id) : '');
-  const [qtyInput, setQtyInput] = useState('');
-  const [priceInput, setPriceInput] = useState('');
-  const [amountInput, setAmountInput] = useState('');
-  /** The amount follows quantity × price until the admin types an amount */
-  const [amountManual, setAmountManual] = useState(false);
-  const [paidOn, setPaidOn] = useState(todayLocalISO());
-  const [purpose, setPurpose] = useState('');
+  const [itemId, setItemId] = useState(() =>
+    expense ? (expense.itemId != null ? String(expense.itemId) : '') : items.length ? String(items[0].id) : '');
+  const [qtyInput, setQtyInput] = useState(expense?.quantity != null ? String(expense.quantity) : '');
+  const [priceInput, setPriceInput] = useState(expense?.unitPrice != null ? String(expense.unitPrice) : '');
+  const [amountInput, setAmountInput] = useState(expense ? String(expense.amount) : '');
+  /** The amount follows quantity × price until the admin types an amount (or, when editing, if they did not match) */
+  const [amountManual, setAmountManual] = useState(() => {
+    if (!expense) return false;
+    if (expense.quantity == null || expense.unitPrice == null) return true;
+    return Math.round(expense.quantity * expense.unitPrice * 100) / 100 !== Number(expense.amount);
+  });
+  const [paidOn, setPaidOn] = useState(expense?.paidOn ?? todayLocalISO());
+  const [purpose, setPurpose] = useState(expense?.purpose ?? '');
   const [receipts, setReceipts] = useState<File[]>([]);
   const [cover, setCover] = useState(false);
   const [error, setError] = useState('');
@@ -271,7 +282,12 @@ export const ExpenseModal: React.FC<{
 
   const amount = parseAmount(amountInput);
   const available = Math.max(0, event.balance);
-  const shortfall = !Number.isNaN(amount) ? Math.max(0, amount - available) : 0;
+  const oldAmount = expense ? Number(expense.amount) : 0;
+  /** Edit: positive = paying more than recorded */
+  const delta = !Number.isNaN(amount) ? Math.round((amount - oldAmount) * 100) / 100 : 0;
+  const shortfall = !Number.isNaN(amount) ? Math.max(0, (editing ? delta : amount) - available) : 0;
+  /** A closed event's spending can be corrected, but not its total (that moves money) */
+  const amountLocked = editing && event.status !== 'OPEN';
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,12 +296,21 @@ export const ExpenseModal: React.FC<{
     const what = purpose.trim() || (item ? `${item.name}${qty != null ? `: ${qtyTimesPrice(qty, item.unit, price)}` : ''}` : '');
     if (!what) return setError('Please enter what the money was spent on.');
     if (paidOn > todayLocalISO()) return setError('The date cannot be in the future.');
+    if (amountLocked && delta !== 0) return setError('This event is closed. Reopen it to change the total paid.');
     if (shortfall > 0 && !cover) return setError(`Tick the box to take ${formatINR(shortfall)} from the General Fund, or enter a smaller amount.`);
     const fileError = validateReceiptFiles(receipts);
     if (fileError) return setError(fileError);
     setError('');
     setBusy(true);
     try {
+      if (expense) {
+        await updateEventExpenseDetails(event.id, expense.id, {
+          itemId: item ? item.id : null, quantity: qty, unitPrice: price, purpose: what, paidOn,
+          amount: delta !== 0 ? amount : null, coverFromGeneral: shortfall > 0 && cover
+        });
+        onSaved();
+        return;
+      }
       await addEventExpense(event.id, {
         amount, paidOn, purpose: what, coverFromGeneral: shortfall > 0 && cover, receipts,
         itemId: item ? item.id : null, quantity: qty, unitPrice: price
@@ -300,7 +325,7 @@ export const ExpenseModal: React.FC<{
 
   return (
     <ModalShell
-      title="Record spending"
+      title={editing ? 'Edit spending' : 'Record spending'}
       busy={busy}
       onClose={onClose}
       onSubmit={submit}
@@ -308,11 +333,15 @@ export const ExpenseModal: React.FC<{
       footer={
         <>
           <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Record payment'}</button>
+          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Record payment'}</button>
         </>
       }
     >
-      <p className="event-modal-sub">{event.title} has <strong>{formatINR(available)}</strong> in hand.</p>
+      <p className="event-modal-sub">
+        {editing
+          ? <>Recorded total: <strong>{formatINR(oldAmount)}</strong>. {event.title} has <strong>{formatINR(available)}</strong> in hand.</>
+          : <>{event.title} has <strong>{formatINR(available)}</strong> in hand.</>}
+      </p>
       {items.length > 0 && (
         <div className="form-group">
           <label className="form-label" htmlFor="expense-item">Which item is this for?</label>
@@ -341,7 +370,16 @@ export const ExpenseModal: React.FC<{
       <div className="event-form-row">
         <div className="form-group">
           <label className="form-label required" htmlFor="expense-amount">Total paid (₹)</label>
-          <input id="expense-amount" className="form-input" inputMode="decimal" value={amountInput} onChange={(e) => { setAmountInput(e.target.value); setAmountManual(true); setError(''); }} />
+          <input id="expense-amount" className="form-input" inputMode="decimal" value={amountInput} disabled={amountLocked}
+            onChange={(e) => { setAmountInput(e.target.value); setAmountManual(true); setError(''); }} />
+          {amountLocked && <div className="form-help">The event is closed. Reopen it to change the total; the other details can be fixed now.</div>}
+          {editing && !amountLocked && delta !== 0 && (
+            <div className="form-help expense-delta">
+              {delta < 0
+                ? <>{formatINR(-delta)} goes back to the event.</>
+                : <>{formatINR(delta)} more is taken from the event.</>}
+            </div>
+          )}
           {product != null && (
             <div className="form-help">
               {qtyTimesPrice(qty, item?.unit, price)} = {formatINR(product)}
@@ -359,7 +397,7 @@ export const ExpenseModal: React.FC<{
         <input id="expense-purpose" className="form-input" maxLength={500} value={purpose} onChange={(e) => setPurpose(e.target.value)}
           placeholder={item ? `${item.name} from … (shop name, optional)` : 'Bicycle from Sai Cycle Store'} />
       </div>
-      {shortfall > 0 && (
+      {shortfall > 0 && !amountLocked && (
         <div className="event-shortfall" role="status">
           <p>
             The event has only {formatINR(available)}, so <strong>{formatINR(shortfall)}</strong> more is needed.
@@ -371,10 +409,84 @@ export const ExpenseModal: React.FC<{
           </label>
         </div>
       )}
+      {!editing && (
+        <div className="form-group">
+          <label className="form-label">Bills or receipts (recommended)</label>
+          <ReceiptFilePicker files={receipts} onChange={setReceipts} disabled={busy} />
+          <div className="form-help">All members can see these on the event page.</div>
+        </div>
+      )}
+      {editing && <div className="form-help">Bills are added or removed in the spending list on the event page.</div>}
+    </ModalShell>
+  );
+};
+
+// ------------------------------------------------------------------ reopen
+
+/** Moves made when the event was closed (they happen together, just before the close time) */
+export function closingMoves(event: FundEventDTO) {
+  if (!event.closedAt) return [];
+  const closed = new Date(event.closedAt).getTime();
+  return event.transfers.filter((t) => t.fromEventId === event.id && (t.kind === 'LEFTOVER' || t.kind === 'CANCELLATION')
+    && new Date(t.createdAt).getTime() <= closed + 5000 && new Date(t.createdAt).getTime() >= closed - 600000);
+}
+
+export const ReopenEventModal: React.FC<{
+  event: FundEventDTO;
+  onSaved: () => void;
+  onClose: () => void;
+}> = ({ event, onSaved, onClose }) => {
+  const moves = closingMoves(event);
+  const total = moves.reduce((s, t) => s + Number(t.amount), 0);
+  const [bringBack, setBringBack] = useState(true);
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reason.trim()) return setError('Please say why the event is being reopened; members can see this.');
+    setBusy(true);
+    setError('');
+    try {
+      await reopenEvent(event.id, reason.trim(), moves.length > 0 && bringBack);
+      onSaved();
+    } catch (err) {
+      setError(errorOf(err, 'Could not reopen the event.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <ModalShell title="Reopen event" busy={busy} onClose={onClose} onSubmit={submit} error={error}
+      footer={<>
+        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
+        <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Reopening…' : 'Reopen event'}</button>
+      </>}>
+      <p className="event-modal-sub">
+        {event.title} becomes open again, so you can edit it, fix or add spending and record donations. Close it again when you are done.
+      </p>
+      {moves.length > 0 && (
+        <div className="event-shortfall">
+          <p>
+            When it was {event.status === 'CANCELLED' ? 'cancelled' : 'closed'}, <strong>{formatINR(total)}</strong> was moved out:{' '}
+            {moves.map((t) => `${formatINR(t.amount)} to ${t.toTitle}`).join(', ')}.
+          </p>
+          <label className="event-check">
+            <input type="checkbox" checked={bringBack} onChange={(e) => setBringBack(e.target.checked)} />
+            <span>Bring it back into this event</span>
+          </label>
+        </div>
+      )}
+      {event.collectionEnded || event.endDate < todayLocalISO() ? (
+        <p className="form-help">The last day for donations ({event.endDate.split('-').reverse().join('-')}) has passed. Use Edit to change it if members should donate online again.</p>
+      ) : null}
       <div className="form-group">
-        <label className="form-label">Bills or receipts (recommended)</label>
-        <ReceiptFilePicker files={receipts} onChange={setReceipts} disabled={busy} />
-        <div className="form-help">All members can see these on the event page.</div>
+        <label className="form-label required" htmlFor="reopen-reason">Why?</label>
+        <input id="reopen-reason" className="form-input" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)}
+          placeholder="For example: to correct the chocolate bill" />
+        <div className="form-help">Members see this under "Changes" on the event page.</div>
       </div>
     </ModalShell>
   );

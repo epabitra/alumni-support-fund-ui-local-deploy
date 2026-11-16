@@ -4,7 +4,7 @@ import type { ScholarshipReceiptDTO } from '../../scholarship/core/_models';
 export type FundEventStatus = 'DRAFT' | 'OPEN' | 'CLOSED' | 'CANCELLED';
 
 /** Money moved between funds: MANUAL by an admin, COVER_SHORTFALL for a payment, LEFTOVER at closing, CANCELLATION */
-export type FundTransferKind = 'MANUAL' | 'COVER_SHORTFALL' | 'LEFTOVER' | 'CANCELLATION';
+export type FundTransferKind = 'MANUAL' | 'COVER_SHORTFALL' | 'LEFTOVER' | 'CANCELLATION' | 'REOPEN';
 
 export interface FundEventExpenseDTO {
   id: number;
@@ -70,7 +70,7 @@ export interface FundTransferDTO {
 }
 
 export interface FundEventChangeDTO {
-  field: 'END_DATE' | 'START_DATE' | 'BUDGET';
+  field: 'END_DATE' | 'START_DATE' | 'BUDGET' | 'STATUS';
   oldValue?: string;
   newValue?: string;
   reason?: string;

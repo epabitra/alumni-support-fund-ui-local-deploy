@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import type { FundEventDTO, FundEventExpenseDTO, FundEventItemDTO, PlanItemInput } from '../../app/modules/events/core/_models';
-import { saveEventReport, updateEventExpenseDetails } from '../../app/modules/events/core/_requests';
-import { formatINR, todayLocalISO } from '../ScholarshipPaymentModal';
+import type { FundEventDTO, FundEventItemDTO, PlanItemInput } from '../../app/modules/events/core/_models';
+import { saveEventReport } from '../../app/modules/events/core/_requests';
+import { formatINR } from '../ScholarshipPaymentModal';
 import { EventGallery, EventImageManager } from './EventImages';
 import { EventText } from './EventBits';
 import { ModalShell } from './EventModals';
@@ -326,89 +326,6 @@ export const ReportModal: React.FC<{
       <div className="form-group">
         <label className="form-label">Photos from the event</label>
         <EventImageManager eventId={event.id} images={photos} kind="PHOTO" onChange={setPhotos} />
-      </div>
-    </ModalShell>
-  );
-};
-
-// ------------------------------------------------------------------ fix a payment's details
-
-export const ExpenseDetailsModal: React.FC<{
-  event: FundEventDTO;
-  expense: FundEventExpenseDTO;
-  onSaved: () => void;
-  onClose: () => void;
-}> = ({ event, expense, onSaved, onClose }) => {
-  const items = event.items ?? [];
-  const [itemId, setItemId] = useState(expense.itemId != null ? String(expense.itemId) : '');
-  const [qty, setQty] = useState(expense.quantity != null ? String(expense.quantity) : '');
-  const [price, setPrice] = useState(expense.unitPrice != null ? String(expense.unitPrice) : '');
-  const [purpose, setPurpose] = useState(expense.purpose);
-  const [paidOn, setPaidOn] = useState(expense.paidOn);
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const q = parseOptional(qty);
-  const p = parseOptional(price);
-  const product = q != null && p != null && !Number.isNaN(q) && !Number.isNaN(p) ? round2(q * p) : null;
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (Number.isNaN(q) || Number.isNaN(p)) return setError('Please check the quantity and price.');
-    if (!purpose.trim()) return setError('Please say what it was spent on.');
-    if (paidOn > todayLocalISO()) return setError('The date cannot be in the future.');
-    setBusy(true);
-    setError('');
-    try {
-      await updateEventExpenseDetails(event.id, expense.id, {
-        itemId: itemId ? Number(itemId) : null, quantity: q, unitPrice: p, purpose: purpose.trim(), paidOn
-      });
-      onSaved();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Could not save the details.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <ModalShell title="Edit payment details" busy={busy} onClose={onClose} onSubmit={submit} error={error}
-      footer={<>
-        <button type="button" className="btn btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
-        <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-      </>}>
-      <p className="event-modal-sub">
-        Amount paid: <strong>{formatINR(expense.amount)}</strong>. The amount cannot be changed because the money has already moved.
-      </p>
-      {items.length > 0 && (
-        <div className="form-group">
-          <label className="form-label" htmlFor="xd-item">Which item was it for?</label>
-          <select id="xd-item" className="form-input" value={itemId} onChange={(e) => setItemId(e.target.value)}>
-            {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-            <option value="">Something else</option>
-          </select>
-        </div>
-      )}
-      <div className="event-form-row">
-        <div className="form-group">
-          <label className="form-label" htmlFor="xd-qty">How many?</label>
-          <input id="xd-qty" className="form-input" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="xd-price">Price of one (₹)</label>
-          <input id="xd-price" className="form-input" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label" htmlFor="xd-date">Paid on</label>
-          <input id="xd-date" type="date" className="form-input" value={paidOn} max={todayLocalISO()} onChange={(e) => setPaidOn(e.target.value)} />
-        </div>
-      </div>
-      {product != null && product !== expense.amount && (
-        <p className="form-help">{qtyTimesPrice(q, null, p)} = {formatINR(product)}, which differs from the amount paid ({formatINR(expense.amount)}). That is fine if there was a discount or delivery charge.</p>
-      )}
-      <div className="form-group">
-        <label className="form-label required" htmlFor="xd-purpose">What was it spent on?</label>
-        <input id="xd-purpose" className="form-input" maxLength={500} value={purpose} onChange={(e) => setPurpose(e.target.value)} />
       </div>
     </ModalShell>
   );

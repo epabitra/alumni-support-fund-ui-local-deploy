@@ -1189,3 +1189,14 @@ a.purpose-chip.event:hover {
   font-size: 0.8125rem;
   color: #b91c1c;
 }
+
+.event-admin-bar-note {
+  flex: 1 1 16rem;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.expense-delta {
+  color: #92400e;
+  font-weight: 600;
+}
