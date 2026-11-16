@@ -73,6 +73,42 @@ export function getPublicHistory(
     .then((response) => response.data);
 }
 
+/** One line of the whole-fund statement */
+export interface FundStatementEntry {
+  kind: 'CONTRIBUTION' | 'SCHOLARSHIP' | 'EVENT_EXPENSE' | 'REFUND';
+  direction: 'IN' | 'OUT';
+  /** yyyy-MM-dd */
+  date: string;
+  recordedAt?: string;
+  amount: number;
+  title: string;
+  subtitle: string;
+  eventId?: number | null;
+  profileImageUrl?: string | null;
+  /** Fund balance right after this entry */
+  balanceAfter: number;
+  /** Admins only */
+  orderId?: string | null;
+}
+
+export interface FundStatementFilters {
+  search?: string;
+  from?: string;
+  to?: string;
+  /** in, out, students, events, refunds */
+  type?: string;
+  sortDir?: 'asc' | 'desc';
+}
+
+/** Every contribution in and payment out, in date order with the balance after each. Authenticated. */
+export function getFundStatement(page = 0, size = 10, filters: FundStatementFilters = {}): Promise<PageResponse<FundStatementEntry>> {
+  const params: Record<string, string | number> = { page, size };
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v != null && String(v).trim() !== '') params[k] = String(v).trim();
+  });
+  return paymentAxios.get<PageResponse<FundStatementEntry>>(`${PAYMENTS_BASE}/fund-statement`, { params }).then((r) => r.data);
+}
+
 /** Get current organization fund balance. Authenticated. */
 export function getFundBalance() {
   return paymentAxios.get<FundBalanceDTO>(`${PAYMENTS_BASE}/fund-balance`).then((r) => r.data);

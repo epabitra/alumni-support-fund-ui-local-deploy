@@ -943,3 +943,81 @@ a.fund-stat-clickable:focus-visible {
   font-size: 0.78rem;
   cursor: help;
 }
+
+/* ---------------- All transactions (fund statement) ---------------- */
+.statement-intro {
+  margin: -0.25rem 0 1rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.statement-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  font-size: 1.1rem;
+}
+
+.statement-icon.scholarship {
+  background: #eef2ff;
+}
+
+.statement-icon.event_expense {
+  background: #fef3c7;
+}
+
+.statement-icon.refund {
+  background: #fee2e2;
+}
+
+.statement-sub {
+  display: block;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.statement-sub a {
+  color: #996c00;
+  text-decoration: none;
+}
+
+.statement-sub a:hover {
+  text-decoration: underline;
+}
+
+.statement-amount {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.statement-amount.in {
+  color: #15803d !important;
+}
+
+.statement-amount.out {
+  color: #b91c1c !important;
+}
+
+.statement-balance {
+  color: #475569;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Balance card is a tab now: keep its breakdown readable */
+.fund-summary-balance .fund-breakdown {
+  width: 100%;
+}
+
+.fund-breakdown-event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #92400e;
+}

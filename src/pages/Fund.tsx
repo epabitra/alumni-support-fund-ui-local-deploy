@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../app/modules/auth/core/Auth';
 import { ROLE_ADMIN, ROLE_USER } from '../app/Constants';
 import RoleBasedNav from '../components/RoleBasedNav';
-import { getFundBalance, getPublicHistory } from '../app/modules/payment/core/_requests';
+import { getFundBalance, getFundStatement, getPublicHistory, type FundStatementEntry } from '../app/modules/payment/core/_requests';
 import type { FundBalanceDTO, PublicPaymentHistoryDTO } from '../app/modules/payment/core/_models';
 import { fetchStudentImageBlobUrl, getScholarshipPaymentHistory } from '../app/modules/scholarship/core/_requests';
 import type { ScholarshipPaymentDTO } from '../app/modules/scholarship/core/_models';
@@ -497,7 +497,98 @@ const ScholarshipPaymentsTable: React.FC<{ onTotal: (total: number) => void }> =
   );
 };
 
-type FundTab = 'received' | 'paid';
+type FundTab = 'all' | 'received' | 'paid';
+
+const STATEMENT_TYPES = [
+  { value: '', label: 'Everything' },
+  { value: 'in', label: 'Money in' },
+  { value: 'out', label: 'Money out' },
+  { value: 'students', label: 'Paid to students' },
+  { value: 'events', label: 'Event spending' },
+  { value: 'refunds', label: 'Refunds' }
+];
+
+const KIND_ICON: Record<FundStatementEntry['kind'], string> = { CONTRIBUTION: '📥', SCHOLARSHIP: '🎓', EVENT_EXPENSE: '🎉', REFUND: '↩️' };
+
+/** Every rupee in and out, in date order, with the fund balance after each */
+const StatementTable: React.FC = () => {
+  const [query, setQuery] = useState<TableQuery & { type: string; reload: number }>({ ...DEFAULT_QUERY, type: '', reload: 0 });
+  const update = (patch: Partial<TableQuery>) => setQuery((q) => ({ ...q, ...patch }));
+  const { rows, totalElements, totalPages, loading, error } = useServerTable<FundStatementEntry, typeof query>(query, (q) =>
+    getFundStatement(q.page, q.size, { search: q.search, from: q.from, to: q.to, type: q.type, sortDir: q.sortDir })
+  );
+  const filtered = !!(query.search || query.from || query.to || query.type);
+  const onSort = (sortBy: string, sortDir: 'asc' | 'desc') => update({ sortBy, sortDir, page: 0 });
+
+  return (
+    <div className="payment-card">
+      <div className="fund-card-header">
+        <h2>All transactions</h2>
+      </div>
+      <p className="statement-intro">Every contribution in and every payment out, in date order. The balance is the fund's total after each one.</p>
+      <DataTableToolbar
+        query={query}
+        onChange={update}
+        searchPlaceholder="Name, student, event or amount"
+        hasExtraFilters={!!query.type}
+        onClear={() => setQuery((q) => ({ ...DEFAULT_QUERY, size: q.size, type: '', reload: q.reload }))}
+      >
+        <div className="dt-field">
+          <label className="dt-label">Show</label>
+          <select className="dt-input custom-select" value={query.type} onChange={(e) => setQuery((q) => ({ ...q, page: 0, type: e.target.value }))}>
+            {STATEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          </select>
+        </div>
+      </DataTableToolbar>
+
+      {error && <div className="payment-message error" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+      <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
+        <table data-card-keys="Amount" className="payment-history-table statement-table">
+          <thead>
+            <tr>
+              <th>Details</th>
+              <SortHeader label="Date" field="date" query={query} onSort={onSort} />
+              <th>Amount</th>
+              <th>Balance after</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="dt-empty">{loading ? 'Loading…' : filtered ? 'No transactions match these filters.' : 'No transactions yet.'}</td>
+              </tr>
+            ) : (
+              rows.map((row, idx) => (
+                <tr key={`${query.page}-${idx}`}>
+                  <td>
+                    <div className="contributor-cell">
+                      {row.kind === 'CONTRIBUTION'
+                        ? <ContributorAvatar name={row.profileImageUrl ? row.title : undefined} imageUrl={row.profileImageUrl ?? undefined} />
+                        : <span className={`statement-icon ${row.kind.toLowerCase()}`} aria-hidden>{KIND_ICON[row.kind]}</span>}
+                      <div className="contributor-text">
+                        <span className="contributor-name">{row.title}</span>
+                        <small className="statement-sub">
+                          {row.eventId ? <Link to={`/events/${row.eventId}`}>{row.subtitle}</Link> : row.subtitle}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{formatLocalDate(row.date)}</td>
+                  <td className={`statement-amount ${row.direction === 'IN' ? 'in' : 'out'}`}>
+                    {row.direction === 'IN' ? '+' : '−'}{formatCurrency(row.amount)}
+                  </td>
+                  <td className="statement-balance">{formatCurrency(row.balanceAfter)}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      <DataTablePagination query={query} totalElements={totalElements} totalPages={totalPages} loading={loading} onChange={update} />
+    </div>
+  );
+};
 
 const countLabel = (count: number | null, singular: string, plural: string) =>
   count == null ? '' : `${count} ${count === 1 ? singular : plural}`;
@@ -512,7 +603,9 @@ const Fund: React.FC = () => {
   const [receivedCount, setReceivedCount] = useState<number | null>(null);
   const [paidCount, setPaidCount] = useState<number | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab: FundTab = searchParams.get('tab') === 'received' ? 'received' : 'paid';
+  const tabParam = searchParams.get('tab');
+  // Opened directly: all transactions. The Dashboard links straight to the received or paid-out lists.
+  const tab: FundTab = tabParam === 'received' || tabParam === 'paid' ? tabParam : 'all';
   const [paidView, setPaidView] = useState<'students' | 'events'>(searchParams.get('view') === 'events' ? 'events' : 'students');
 
   const loadBalance = () => {
@@ -530,7 +623,9 @@ const Fund: React.FC = () => {
   const onTabKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
-      selectTab(tab === 'received' ? 'paid' : 'received', true);
+      const order: FundTab[] = ['all', 'received', 'paid'];
+      const step = e.key === 'ArrowRight' ? 1 : -1;
+      selectTab(order[(order.indexOf(tab) + step + order.length) % order.length], true);
     }
   };
 
@@ -553,6 +648,33 @@ const Fund: React.FC = () => {
 
         <div className="fund-summary">
           <div className="fund-summary-tabs" role="tablist" aria-label="Fund details" onKeyDown={onTabKeyDown}>
+            <button
+              type="button"
+              role="tab"
+              id="fund-tab-all"
+              aria-selected={tab === 'all'}
+              aria-controls="fund-panel-all"
+              tabIndex={tab === 'all' ? 0 : -1}
+              className={`fund-summary-card fund-summary-tab fund-summary-balance ${tab === 'all' ? 'active' : ''}`}
+              onClick={() => selectTab('all')}
+            >
+              <span className="fund-summary-label"><span aria-hidden>💰</span> Available balance</span>
+              <span className="fund-summary-amount">{amount(balance?.totalBalance)}</span>
+              {balance && (balance.events?.length ?? 0) > 0 ? (
+                <span className="fund-breakdown" aria-label="Where the balance is kept">
+                  <span className="fund-breakdown-row"><span>General Fund (scholarships)</span><strong>{formatCurrency(balance.generalFundBalance ?? 0)}</strong></span>
+                  {balance.events!.map((e) => (
+                    <span className="fund-breakdown-row" key={e.eventId}>
+                      <span className="fund-breakdown-event" title={e.title}>{e.status === 'DRAFT' ? 'Reserved: ' : ''}{e.title}</span>
+                      <strong>{formatCurrency(e.balance)}</strong>
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <span className="fund-summary-note">Ready for the next student payment</span>
+              )}
+              <span className="fund-summary-action">{tab === 'all' ? 'All transactions below ↓' : 'View all transactions →'}</span>
+            </button>
             <button
               type="button"
               role="tab"
@@ -591,26 +713,12 @@ const Fund: React.FC = () => {
               <span className="fund-summary-action">{tab === 'paid' ? 'Showing below ↓' : 'View list →'}</span>
             </button>
           </div>
-          <div className="fund-summary-card fund-summary-balance">
-            <span className="fund-summary-label"><span aria-hidden>💰</span> Available balance</span>
-            <span className="fund-summary-amount">{amount(balance?.totalBalance)}</span>
-            {balance && (balance.events?.length ?? 0) > 0 ? (
-              <div className="fund-breakdown" aria-label="Where the balance is kept">
-                <div className="fund-breakdown-row"><span>General Fund (scholarships)</span><strong>{formatCurrency(balance.generalFundBalance ?? 0)}</strong></div>
-                {balance.events!.map((e) => (
-                  <div className="fund-breakdown-row" key={e.eventId}>
-                    <Link to={`/events/${e.eventId}`} title={e.title}>{e.status === 'DRAFT' ? 'Reserved: ' : ''}{e.title}</Link>
-                    <strong>{formatCurrency(e.balance)}</strong>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span className="fund-summary-note">Ready for the next student payment</span>
-            )}
-          </div>
         </div>
 
-        {/* Both stay mounted, so searches and filters survive switching tabs */}
+        {/* All stay mounted, so searches and filters survive switching tabs */}
+        <div role="tabpanel" id="fund-panel-all" aria-labelledby="fund-tab-all" hidden={tab !== 'all'}>
+          <StatementTable />
+        </div>
         <div role="tabpanel" id="fund-panel-paid" aria-labelledby="fund-tab-paid" hidden={tab !== 'paid'}>
           <div className="fund-paid-switch" role="group" aria-label="Show payments">
             <button type="button" aria-pressed={paidView === 'students'} onClick={() => setPaidView('students')}>To students</button>

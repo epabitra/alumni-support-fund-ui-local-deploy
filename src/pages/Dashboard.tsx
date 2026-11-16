@@ -100,17 +100,19 @@ const Dashboard: React.FC = () => {
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalContributions ?? 0)}</div>
                     <span className="fund-stat-link">View contributions →</span>
                   </Link>
-                  <div className="stat-card fund-stat fund-stat-available">
+                  <Link to="/fund" className="stat-card fund-stat fund-stat-available fund-stat-clickable">
                     <div className="stat-card-icon">💰</div>
                     <div className="stat-card-label">Available balance</div>
                     <div className="stat-card-value">{formatCurrency(fundBalance.totalBalance ?? 0)}</div>
-                    {(fundBalance.heldByEvents ?? 0) > 0 && (
-                      <Link to="/events" className="fund-stat-link fund-stat-split"
+                    {(fundBalance.heldByEvents ?? 0) > 0 ? (
+                      <span className="fund-stat-link fund-stat-split"
                         title="General Fund pays for scholarships; the rest is set aside for events">
                         General {formatCurrency(fundBalance.generalFundBalance ?? 0)} · Events {formatCurrency(fundBalance.heldByEvents ?? 0)} →
-                      </Link>
+                      </span>
+                    ) : (
+                      <span className="fund-stat-link">All transactions →</span>
                     )}
-                  </div>
+                  </Link>
                   <Link to="/fund?tab=paid" className="stat-card fund-stat fund-stat-clickable">
                     <div className="stat-card-icon">📤</div>
                     <div className="stat-card-label">Total disbursed</div>
