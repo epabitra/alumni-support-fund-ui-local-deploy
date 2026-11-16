@@ -1,0 +1,617 @@
+/*
+ * Phone and small-tablet layer, loaded last.
+ * - Nothing may scroll sideways
+ * - Tables become lists of cards (labels come from ResponsiveTables.tsx)
+ * - Bottom tab bar (RoleBasedNav) and bottom-sheet dialogs, like a phone app
+ */
+
+/* ---------------- Never scroll sideways ---------------- */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* ---------------- Bottom tab bar ---------------- */
+.mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body.has-tabbar {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* The Menu tab opens the side menu, so the top bar keeps just the name */
+  body.has-tabbar .role-nav .nav-toggle {
+    display: none;
+  }
+
+  .mobile-tabbar {
+    position: fixed;
+    z-index: 900;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    align-items: end;
+    padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.97);
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    min-width: 0;
+    padding: 0.3rem 0.1rem;
+    border: 0;
+    background: none;
+    color: #64748b;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tab span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-tab.active {
+    color: #996c00;
+  }
+
+  .mobile-tab.active svg {
+    stroke-width: 2.4;
+  }
+
+  /* Give: raised round button in the middle */
+  .mobile-tab.give .mobile-tab-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-top: -1.4rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5d061, #d4a017);
+    color: #3b2a00;
+    box-shadow: 0 6px 16px rgba(212, 160, 23, 0.45);
+    border: 3px solid #fff;
+  }
+
+  .mobile-tab.give {
+    color: #92400e;
+  }
+}
+
+/* ---------------- Dialogs become bottom sheets ---------------- */
+@media (max-width: 640px) {
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .modal-overlay > .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh;
+    max-height: 92dvh;
+    margin: 0 !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    animation: sheet-up 0.22s ease-out;
+  }
+
+  .modal-overlay > .modal-content::before {
+    content: '';
+    display: block;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 0.3rem;
+    margin: 0.5rem auto 0;
+    border-radius: 999px;
+    background: #cbd5e1;
+  }
+
+  .modal-overlay > .modal-content .modal-footer {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modal-overlay > .modal-content .modal-footer .btn {
+    flex: 1 1 0;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(40%);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ---------------- Tables become cards (class set by ResponsiveTables) ---------------- */
+@media all {
+  .rt-cards-wrap {
+    overflow: visible !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  table.rt-cards {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  table.rt-cards thead {
+    display: none !important;
+  }
+
+  table.rt-cards tbody,
+  table.rt-cards tfoot {
+    display: block !important;
+  }
+
+  table.rt-cards tr {
+    display: block !important;
+    margin: 0 0 0.75rem;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.9rem;
+    background: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  table.rt-cards tfoot tr {
+    background: #f8fafc !important;
+  }
+
+  table.rt-cards td,
+  table.rt-cards tfoot th {
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0.4rem 0 !important;
+    border: 0 !important;
+    text-align: right !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    background: transparent !important;
+  }
+
+  /* Label on the left, value on the right */
+  table.rt-cards td::before,
+  table.rt-cards tfoot th::before {
+    content: attr(data-label);
+    float: left;
+    max-width: 45%;
+    margin-right: 0.75rem;
+    padding-top: 0.1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  table.rt-cards td::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+
+  table.rt-cards td[data-label='']::before,
+  table.rt-cards tfoot th[data-label='']::before {
+    display: none;
+  }
+
+  /* First cell is the card's title */
+  table.rt-cards td:first-child {
+    padding: 0 0 0.6rem !important;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid #f1f5f9 !important;
+    text-align: left !important;
+    font-weight: 600;
+  }
+
+  table.rt-cards td:first-child::before {
+    display: none;
+  }
+
+  /* Buttons (cells without a label) sit on their own line */
+  table.rt-cards td[data-label='']:not(:first-child) {
+    text-align: left !important;
+    padding-top: 0.6rem !important;
+  }
+
+  table.rt-cards td[data-label='']:not(:first-child) .table-actions,
+  table.rt-cards td[data-label='']:not(:first-child) > div {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  /* Groups of chips or badges inside a labelled cell line up on the right */
+  table.rt-cards td:not([data-label='']) > .role-badges-group,
+  table.rt-cards td:not([data-label='']) > .role-checkboxes {
+    display: inline-flex !important;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    max-width: 60%;
+  }
+
+  table.rt-cards td small,
+  table.rt-cards td .plan-sub,
+  table.rt-cards td .users-sub {
+    display: block;
+  }
+
+  /* "No results" rows */
+  table.rt-cards td[colspan] {
+    text-align: center !important;
+    border: 0 !important;
+    padding: 1rem 0 !important;
+    margin: 0;
+  }
+
+  table.rt-cards td[colspan]::before {
+    display: none;
+  }
+
+  table.rt-cards tr:has(> td[colspan]:only-child) {
+    border-style: dashed !important;
+  }
+
+  /* Wide inputs inside cards (inline edit) */
+  table.rt-cards td input,
+  table.rt-cards td select {
+    max-width: 100%;
+  }
+
+  table.rt-cards td .transaction-id-cell,
+  table.rt-cards td.transaction-id-cell {
+    max-width: none;
+  }
+}
+
+/* ---------------- Small polish on phones ---------------- */
+@media (max-width: 640px) {
+  /* Dashboard fund numbers: 2 x 2 instead of four tall cards */
+  .fund-overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.6rem !important;
+  }
+
+  .dashboard-fund-overview .fund-stat {
+    padding: 0.85rem 0.7rem !important;
+    min-height: 0 !important;
+  }
+
+  .dashboard-fund-overview .fund-stat .stat-card-icon {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .dashboard-fund-overview .fund-stat .stat-card-value {
+    font-size: 1.35rem !important;
+  }
+
+  .dashboard-fund-overview .fund-stat .stat-card-label {
+    font-size: 0.68rem !important;
+  }
+
+  /* Table filters: dates side by side */
+  .dt-toolbar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem !important;
+  }
+
+  .dt-toolbar > .dt-field {
+    min-width: 0;
+  }
+
+  .dt-toolbar > .dt-search,
+  .dt-toolbar > .dt-clear,
+  .dt-toolbar > .dt-error {
+    grid-column: 1 / -1;
+  }
+
+  /* Touch-friendly buttons */
+  .btn-sm {
+    min-height: 2.25rem;
+  }
+}
+
+@media all {
+  table.rt-cards .transaction-id-text {
+    display: inline;
+    max-width: none;
+    white-space: normal;
+    word-break: break-all;
+  }
+}
+
+/* Screen-reader-only elements must not stick out of the page */
+.visually-hidden {
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+@media all {
+  /* Labels always in the normal font (some cells use a code font) */
+  table.rt-cards td::before,
+  table.rt-cards tfoot th::before {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Empty cells add nothing to a card */
+  table.rt-cards td:empty,
+  table.rt-cards tfoot th:empty {
+    display: none !important;
+  }
+
+  /* Totals row: first cell is its title */
+  table.rt-cards tfoot th:first-child {
+    padding: 0 0 0.5rem !important;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid #e2e8f0 !important;
+    text-align: left !important;
+  }
+
+  table.rt-cards tfoot th:first-child::before {
+    display: none;
+  }
+
+  /* Long references: one line, cut with … */
+  table.rt-cards .transaction-id-text {
+    display: inline-block;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+    vertical-align: bottom;
+  }
+
+}
+
+@media (max-width: 720px) {
+  /* Paging: summary on top, buttons spread below */
+  .dt-pagination {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.6rem;
+  }
+
+  .dt-pagination-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.4rem;
+  }
+}
+
+@media (max-width: 640px) {
+  /* My Contributions summary: 2 x 2 */
+  .contribution-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.6rem !important;
+  }
+
+  .contribution-stat {
+    padding: 0.85rem 0.8rem !important;
+  }
+
+  .contribution-stat-value {
+    font-size: 1.25rem;
+  }
+}
+
+/* Wider screens: cards side by side */
+@media (min-width: 721px) {
+  table.rt-cards tbody {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
+    gap: 0.75rem;
+  }
+
+  table.rt-cards tbody tr {
+    margin: 0;
+  }
+
+  table.rt-cards tbody tr:has(> td[colspan]:only-child) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------------- Dashboard on phones: compact, app-like ---------------- */
+@media (max-width: 640px) {
+  .dashboard-content {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .dashboard-hero {
+    padding: 1.1rem 0.9rem 1rem !important;
+    border-radius: 1.25rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .dashboard-hero .hero-greeting {
+    margin-bottom: 1rem !important;
+    text-align: left !important;
+  }
+
+  .dashboard-hero .hero-welcome {
+    padding: 0.2rem 0.6rem !important;
+    font-size: 0.65rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .dashboard-hero .hero-title {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+  }
+
+  .dashboard-hero .hero-subtitle {
+    display: none !important;
+  }
+
+  .dashboard-fund-overview .fund-overview-header {
+    flex-direction: row !important;
+    align-items: baseline !important;
+    justify-content: space-between !important;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem !important;
+  }
+
+  .dashboard-fund-overview .fund-overview-title {
+    font-size: 0.8rem !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .dashboard-fund-overview .fund-overview-link {
+    font-size: 0.78rem !important;
+    white-space: nowrap;
+  }
+
+  /* Fund tiles: label, number, link; no icon */
+  .dashboard-fund-overview .fund-stat {
+    align-items: flex-start !important;
+    text-align: left !important;
+    padding: 0.75rem 0.8rem !important;
+    border-radius: 0.9rem !important;
+  }
+
+  .dashboard-fund-overview .fund-stat .stat-card-icon {
+    display: none !important;
+  }
+
+  .dashboard-fund-overview .fund-stat .stat-card-label {
+    margin: 0 0 0.2rem !important;
+    font-size: 0.66rem !important;
+    letter-spacing: 0.04em;
+  }
+
+  .dashboard-fund-overview .fund-stat .stat-card-value {
+    margin: 0 !important;
+    font-size: 1.3rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dashboard-fund-overview .fund-stat .fund-stat-link {
+    margin-top: 0.3rem !important;
+    font-size: 0.72rem !important;
+    text-align: left !important;
+  }
+
+  /* Quick actions: tiles, two per row, the main action full width */
+  .hero-quick-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem !important;
+    margin-top: 1rem !important;
+  }
+
+  .hero-quick-actions .hero-action-btn {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 3.25rem;
+    padding: 0.6rem 0.7rem !important;
+    border-radius: 0.85rem !important;
+    text-align: left !important;
+  }
+
+  .hero-quick-actions .hero-action-btn.primary-cta {
+    grid-column: 1 / -1;
+    justify-content: center !important;
+  }
+
+  .hero-quick-actions .hero-action-icon {
+    flex-shrink: 0;
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+  }
+
+  .hero-quick-actions .btn-main-text {
+    font-size: 0.8rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .hero-quick-actions .btn-sub-text {
+    display: none !important;
+  }
+
+  /* Workspace cards below */
+  .dashboard-workspace {
+    gap: 0.75rem !important;
+  }
+
+  .workspace-section {
+    padding: 1rem !important;
+    border-radius: 1rem !important;
+  }
+
+  .workspace-links {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem !important;
+  }
+
+  .workspace-link {
+    min-width: 0;
+    padding: 0.6rem 0.55rem !important;
+    border-radius: 0.7rem !important;
+    font-size: 0.8rem !important;
+    background: #f8fafc;
+  }
+
+  .dashboard-open-events,
+  .dashboard-recent-transactions {
+    padding: 1rem !important;
+    border-radius: 1rem !important;
+  }
+}

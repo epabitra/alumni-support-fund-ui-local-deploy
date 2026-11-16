@@ -34,6 +34,14 @@ function formatDateShort(iso?: string): string {
   }
 }
 
+const METHOD_LABELS: Record<string, string> = {
+  UPI: 'UPI', CARD: 'Card', NETBANKING: 'Net banking', WALLET: 'Wallet', EMI: 'EMI', ADMIN: 'Paid to admin'
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  SUCCESS: 'Paid', PAID: 'Paid', FAILED: 'Failed', PENDING: 'Pending', CREATED: 'Pending', CANCELLED: 'Cancelled'
+};
+
 function statusBadge(status: string): string {
   const s = status.toUpperCase();
   if (s === 'SUCCESS' || s === 'PAID') return 'success';
@@ -132,8 +140,8 @@ const MyContributions: React.FC = () => {
   return (
     <div className="dashboard-container">
       <RoleBasedNav />
-      <main className="payment-main dashboard-content">
-        <div className="private-page-title-block">
+      <main className="payment-main dashboard-content my-contrib-main">
+        <div className="private-page-title-block my-contrib-title">
           <h1>My Contributions</h1>
           <p>Your contribution summary and payment history.</p>
         </div>
@@ -191,7 +199,7 @@ const MyContributions: React.FC = () => {
                     <tr>
                       <th>Date</th>
                       <th>For</th>
-                      <th>Transaction</th>
+                      <th>Reference</th>
                       <th>Amount</th>
                       <th>Method</th>
                       <th>Status</th>
@@ -209,7 +217,9 @@ const MyContributions: React.FC = () => {
                             <span className="purpose-chip">{tx.purpose || 'General Fund'}</span>
                           )}
                         </td>
-                        <td className="transaction-id-cell">{tx.transactionId}</td>
+                        <td className="transaction-id-cell">
+                          <span className="transaction-id-text" title={tx.transactionId}>{tx.transactionId}</span>
+                        </td>
                         <td className="amount-cell">
                           {formatCurrency(tx.amount)}
                           {(tx.refundedAmount ?? 0) > 0 && (
@@ -218,9 +228,9 @@ const MyContributions: React.FC = () => {
                             </small>
                           )}
                         </td>
-                        <td>{tx.paymentMethod || tx.paymentGateway || '—'}</td>
+                        <td>{METHOD_LABELS[tx.paymentMethod ?? ''] || tx.paymentMethod || tx.paymentGateway || '—'}</td>
                         <td>
-                          <span className={`status-badge ${statusBadge(tx.status)}`}>{tx.status}</span>
+                          <span className={`status-badge ${statusBadge(tx.status)}`}>{STATUS_LABELS[tx.status.toUpperCase()] || tx.status}</span>
                         </td>
                         <td>
                           {tx.orderId ? (

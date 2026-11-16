@@ -7,6 +7,9 @@ import { setupAxios } from './app/modules/auth/core/setupAxios';
 import axios from 'axios';
 import './index.css';
 import './styles/modal-layout.css';
+// Phone layer last, so it wins over page styles
+import './styles/mobile-app.css';
+import ResponsiveTables from './components/ResponsiveTables';
 
 // Setup axios interceptors
 setupAxios(axios);
@@ -21,6 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <AuthInit>
           <App />
+          <ResponsiveTables />
         </AuthInit>
       </AuthProvider>
     </BrowserRouter>

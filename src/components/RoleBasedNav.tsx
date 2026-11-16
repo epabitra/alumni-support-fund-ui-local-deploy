@@ -273,6 +273,24 @@ const RoleBasedNav: React.FC = () => {
 
   const closeProfile = () => setIsProfileOpen(false);
 
+  // Leaves room at the bottom of every signed-in page for the phone tab bar
+  useEffect(() => {
+    document.body.classList.add('has-tabbar');
+    return () => document.body.classList.remove('has-tabbar');
+  }, []);
+
+  /** Phone tab bar: the most used pages, with Give in the middle; everything else is under Menu */
+  const tabs: (NavItem & { give?: boolean })[] = canContribute
+    ? [
+        { ...DASHBOARD_ITEM, label: 'Home' },
+        EVENTS_ITEM,
+        { to: '/contribute', label: 'Give', icon: 'heart', give: true },
+        { ...FUND_ITEM, label: 'Fund' }
+      ]
+    : [{ ...DASHBOARD_ITEM, label: 'Home' }, EVENTS_ITEM, { ...FUND_ITEM, label: 'Fund' }, { ...SELECTED_STUDENTS_ITEM, label: 'Students' }];
+  const tabActive = (to: string) => (to === '/contribute' ? location.pathname === '/contribute' : isActive(to));
+  const menuHighlighted = !isMenuOpen && !tabs.some((t) => tabActive(t.to));
+
   return (
     <>
       <nav className={`role-nav ${isAdmin ? 'role-nav--admin' : ''}`}>
@@ -360,6 +378,26 @@ const RoleBasedNav: React.FC = () => {
             )}
           </div>
         </div>
+      </nav>
+
+      {/* Phone tab bar */}
+      <nav className="mobile-tabbar" aria-label="Main">
+        {tabs.map((t) => (
+          <Link key={t.to} to={t.to} className={`mobile-tab ${t.give ? 'give' : ''} ${tabActive(t.to) ? 'active' : ''}`}
+            aria-current={tabActive(t.to) ? 'page' : undefined}>
+            <span className="mobile-tab-icon"><Icon name={t.icon} size={t.give ? 22 : 22} /></span>
+            <span>{t.label}</span>
+          </Link>
+        ))}
+        <button type="button" className={`mobile-tab ${menuHighlighted || isMenuOpen ? 'active' : ''}`} aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((o) => !o)}>
+          <span className="mobile-tab-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+              <line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" />
+            </svg>
+          </span>
+          <span>Menu</span>
+        </button>
       </nav>
 
       {/* Mobile Sidebar */}

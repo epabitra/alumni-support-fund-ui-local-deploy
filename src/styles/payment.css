@@ -924,3 +924,22 @@ a.fund-stat-clickable:focus-visible {
     grid-column: 1 / -1;
   }
 }
+
+/* My Contributions: use the full width like the Dashboard, and keep the reference from running into the amount */
+.payment-main.my-contrib-main {
+  max-width: 1320px;
+}
+
+.transaction-id-cell {
+  padding-right: 1.5rem !important;
+}
+
+.transaction-id-text {
+  display: block;
+  max-width: 12.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  cursor: help;
+}
