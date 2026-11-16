@@ -138,7 +138,7 @@ const AdminReviews: React.FC = () => {
 
         <div className="table-container">
           <div className="table-wrapper">
-            <table className="table">
+            <table data-card-keys="Class" className="table">
               <thead>
               <tr>
                 <th>Name</th>

@@ -141,7 +141,7 @@ const AdminUsers: React.FC = () => {
           <p className="dt-note users-period-note">Period, From and To filter by the date the user joined.</p>
 
           <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
-            <table className="payment-history-table users-table">
+            <table data-card-keys="Contributed" className="payment-history-table users-table">
               <thead>
                 <tr>
                   <SortHeader label="Member" field="name" query={query} onSort={onSort} firstDir="asc" />

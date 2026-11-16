@@ -170,7 +170,7 @@ const AdminSelection: React.FC = () => {
 
         <div className="table-container">
           <div className="table-wrapper">
-            <table className="table">
+            <table data-card-keys="Total Cost" className="table">
               <thead>
               <tr>
                 <th>Name</th>

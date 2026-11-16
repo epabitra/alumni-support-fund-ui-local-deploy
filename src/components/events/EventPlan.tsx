@@ -142,7 +142,7 @@ export const PlanVsActual: React.FC<{ event: FundEventDTO }> = ({ event }) => {
       <h2 id="event-plan-title">{anyBought ? 'Plan and what actually happened' : 'Budget plan'}</h2>
       {!anyBought && <p className="event-empty-line">Estimated before buying. Actual prices and quantities will be shown here as money is spent.</p>}
       <div className="table-scroll-wrap">
-        <table className="payment-history-table plan-table">
+        <table data-card-keys="Paid" className="payment-history-table plan-table">
           <thead>
             <tr>
               <th>Item</th>

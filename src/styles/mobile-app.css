@@ -154,7 +154,7 @@ svg {
 
 /* ---------------- Tables become cards (class set by ResponsiveTables) ---------------- */
 @media all {
-  .rt-cards-wrap {
+  [data-rt-wrap] {
     overflow: visible !important;
     border: 0 !important;
     box-shadow: none !important;
@@ -164,7 +164,7 @@ svg {
     margin-right: 0 !important;
   }
 
-  table.rt-cards {
+  table[data-rt-cards] {
     display: block !important;
     width: 100% !important;
     min-width: 0 !important;
@@ -172,16 +172,16 @@ svg {
     background: transparent !important;
   }
 
-  table.rt-cards thead {
+  table[data-rt-cards] thead {
     display: none !important;
   }
 
-  table.rt-cards tbody,
-  table.rt-cards tfoot {
+  table[data-rt-cards] tbody,
+  table[data-rt-cards] tfoot {
     display: block !important;
   }
 
-  table.rt-cards tr {
+  table[data-rt-cards] tr {
     display: block !important;
     margin: 0 0 0.75rem;
     padding: 0.85rem 0.95rem;
@@ -191,12 +191,12 @@ svg {
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   }
 
-  table.rt-cards tfoot tr {
+  table[data-rt-cards] tfoot tr {
     background: #f8fafc !important;
   }
 
-  table.rt-cards td,
-  table.rt-cards tfoot th {
+  table[data-rt-cards] td,
+  table[data-rt-cards] tfoot th {
     display: block !important;
     width: auto !important;
     min-width: 0 !important;
@@ -211,8 +211,8 @@ svg {
   }
 
   /* Label on the left, value on the right */
-  table.rt-cards td::before,
-  table.rt-cards tfoot th::before {
+  table[data-rt-cards] td::before,
+  table[data-rt-cards] tfoot th::before {
     content: attr(data-label);
     float: left;
     max-width: 45%;
@@ -226,19 +226,19 @@ svg {
     color: #64748b;
   }
 
-  table.rt-cards td::after {
+  table[data-rt-cards] td::after {
     content: '';
     display: block;
     clear: both;
   }
 
-  table.rt-cards td[data-label='']::before,
-  table.rt-cards tfoot th[data-label='']::before {
+  table[data-rt-cards] td[data-label='']::before,
+  table[data-rt-cards] tfoot th[data-label='']::before {
     display: none;
   }
 
   /* First cell is the card's title */
-  table.rt-cards td:first-child {
+  table[data-rt-cards] td:first-child {
     padding: 0 0 0.6rem !important;
     margin-bottom: 0.35rem;
     border-bottom: 1px solid #f1f5f9 !important;
@@ -246,18 +246,18 @@ svg {
     font-weight: 600;
   }
 
-  table.rt-cards td:first-child::before {
+  table[data-rt-cards] td:first-child::before {
     display: none;
   }
 
   /* Buttons (cells without a label) sit on their own line */
-  table.rt-cards td[data-label='']:not(:first-child) {
+  table[data-rt-cards] td[data-label='']:not(:first-child) {
     text-align: left !important;
     padding-top: 0.6rem !important;
   }
 
-  table.rt-cards td[data-label='']:not(:first-child) .table-actions,
-  table.rt-cards td[data-label='']:not(:first-child) > div {
+  table[data-rt-cards] td[data-label='']:not(:first-child) .table-actions,
+  table[data-rt-cards] td[data-label='']:not(:first-child) > div {
     display: flex !important;
     flex-wrap: wrap;
     justify-content: flex-start;
@@ -265,8 +265,8 @@ svg {
   }
 
   /* Groups of chips or badges inside a labelled cell line up on the right */
-  table.rt-cards td:not([data-label='']) > .role-badges-group,
-  table.rt-cards td:not([data-label='']) > .role-checkboxes {
+  table[data-rt-cards] td:not([data-label='']) > .role-badges-group,
+  table[data-rt-cards] td:not([data-label='']) > .role-checkboxes {
     display: inline-flex !important;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -274,36 +274,36 @@ svg {
     max-width: 60%;
   }
 
-  table.rt-cards td small,
-  table.rt-cards td .plan-sub,
-  table.rt-cards td .users-sub {
+  table[data-rt-cards] td small,
+  table[data-rt-cards] td .plan-sub,
+  table[data-rt-cards] td .users-sub {
     display: block;
   }
 
   /* "No results" rows */
-  table.rt-cards td[colspan] {
+  table[data-rt-cards] td[colspan] {
     text-align: center !important;
     border: 0 !important;
     padding: 1rem 0 !important;
     margin: 0;
   }
 
-  table.rt-cards td[colspan]::before {
+  table[data-rt-cards] td[colspan]::before {
     display: none;
   }
 
-  table.rt-cards tr:has(> td[colspan]:only-child) {
+  table[data-rt-cards] tr:has(> td[colspan]:only-child) {
     border-style: dashed !important;
   }
 
   /* Wide inputs inside cards (inline edit) */
-  table.rt-cards td input,
-  table.rt-cards td select {
+  table[data-rt-cards] td input,
+  table[data-rt-cards] td select {
     max-width: 100%;
   }
 
-  table.rt-cards td .transaction-id-cell,
-  table.rt-cards td.transaction-id-cell {
+  table[data-rt-cards] td .transaction-id-cell,
+  table[data-rt-cards] td.transaction-id-cell {
     max-width: none;
   }
 }
@@ -360,7 +360,7 @@ svg {
 }
 
 @media all {
-  table.rt-cards .transaction-id-text {
+  table[data-rt-cards] .transaction-id-text {
     display: inline;
     max-width: none;
     white-space: normal;
@@ -377,31 +377,31 @@ svg {
 
 @media all {
   /* Labels always in the normal font (some cells use a code font) */
-  table.rt-cards td::before,
-  table.rt-cards tfoot th::before {
+  table[data-rt-cards] td::before,
+  table[data-rt-cards] tfoot th::before {
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
 
   /* Empty cells add nothing to a card */
-  table.rt-cards td:empty,
-  table.rt-cards tfoot th:empty {
+  table[data-rt-cards] td:empty,
+  table[data-rt-cards] tfoot th:empty {
     display: none !important;
   }
 
   /* Totals row: first cell is its title */
-  table.rt-cards tfoot th:first-child {
+  table[data-rt-cards] tfoot th:first-child {
     padding: 0 0 0.5rem !important;
     margin-bottom: 0.35rem;
     border-bottom: 1px solid #e2e8f0 !important;
     text-align: left !important;
   }
 
-  table.rt-cards tfoot th:first-child::before {
+  table[data-rt-cards] tfoot th:first-child::before {
     display: none;
   }
 
   /* Long references: one line, cut with … */
-  table.rt-cards .transaction-id-text {
+  table[data-rt-cards] .transaction-id-text {
     display: inline-block;
     max-width: 55%;
     overflow: hidden;
@@ -447,17 +447,17 @@ svg {
 
 /* Wider screens: cards side by side */
 @media (min-width: 721px) {
-  table.rt-cards tbody {
+  table[data-rt-cards] tbody {
     display: grid !important;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr));
     gap: 0.75rem;
   }
 
-  table.rt-cards tbody tr {
+  table[data-rt-cards] tbody tr {
     margin: 0;
   }
 
-  table.rt-cards tbody tr:has(> td[colspan]:only-child) {
+  table[data-rt-cards] tbody tr:has(> td[colspan]:only-child) {
     grid-column: 1 / -1;
   }
 }
@@ -613,5 +613,158 @@ svg {
   .dashboard-recent-transactions {
     padding: 1rem !important;
     border-radius: 1rem !important;
+  }
+}
+
+/* ---------------- Collapsible cards: title + key values, details behind + ---------------- */
+@media all {
+  table[data-rt-cards] tr[data-rt-more] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto 1.9rem;
+    column-gap: 0.65rem;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  table[data-rt-cards] tr[data-rt-more]:focus-visible {
+    outline: 2px solid #d4a017;
+    outline-offset: 2px;
+  }
+
+  /* Title on the left, spanning the key rows */
+  table[data-rt-cards] tr[data-rt-more] > td[data-rt='title'] {
+    order: -3;
+    grid-column: 1;
+    grid-row: 1 / span 1;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    min-width: 0 !important;
+  }
+
+  table[data-rt-cards] tr[data-rt-keys='2'] > td[data-rt='title'] {
+    grid-row: 1 / span 2;
+  }
+
+  /* Key values on the right, without labels */
+  table[data-rt-cards] tr[data-rt-more] > td[data-rt='key'] {
+    order: -2;
+    grid-column: 2;
+    padding: 0.1rem 0 !important;
+    text-align: right !important;
+    font-weight: 600;
+  }
+
+  table[data-rt-cards] tr[data-rt-more] > td[data-rt='key']::before {
+    display: none !important;
+  }
+
+  /* The + / − button */
+  table[data-rt-cards] tr[data-rt-more]::after {
+    content: '+';
+    order: -1;
+    grid-column: 3;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 0.15s ease;
+  }
+
+  table[data-rt-cards] tr[data-rt-more][data-rt-open]::after {
+    content: '−';
+    background: #92400e;
+    color: #fff;
+  }
+
+  /* Details: hidden until opened, then full width below */
+  table[data-rt-cards] tr[data-rt-more] > td[data-rt^='detail'] {
+    grid-column: 1 / -1;
+  }
+
+  table[data-rt-cards] tr[data-rt-more]:not([data-rt-open]) > td[data-rt^='detail'],
+  table[data-rt-cards] tr[data-rt-more]:not([data-rt-open]) > td:empty {
+    display: none !important;
+  }
+
+  table[data-rt-cards] tr[data-rt-more][data-rt-open] > td[data-rt='detail-first'] {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem !important;
+    border-top: 1px dashed #e2e8f0 !important;
+  }
+
+  table[data-rt-cards] tr[data-rt-more][data-rt-open] {
+    border-color: #f0c75e !important;
+    box-shadow: 0 4px 14px rgba(212, 160, 23, 0.12);
+  }
+
+  /* Compact cards on phones */
+  table[data-rt-cards] tr[data-rt-more] {
+    padding: 0.7rem 0.8rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+}
+
+/* iPhone Safari: date fields ignore their column width unless told */
+input[type='date'],
+input[type='datetime-local'],
+input[type='month'] {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 2.6rem;
+    display: block;
+    width: 100%;
+  }
+}
+
+/* Dashboard quick actions: the main button is full width only when that leaves the rest in pairs */
+@media (max-width: 640px) {
+  .hero-quick-actions .hero-action-btn.primary-cta:first-child:nth-last-child(even) {
+    grid-column: auto;
+  }
+}
+
+/* Card titles: one line each, cut with … (full text is in the open card or on the page) */
+@media all {
+  table[data-rt-cards] td[data-rt='title'] {
+    overflow: hidden;
+    overflow-wrap: normal !important;
+  }
+
+  table[data-rt-cards] td[data-rt='title'] .contributor-cell,
+  table[data-rt-cards] td[data-rt='title'] .contributor-text {
+    min-width: 0;
+  }
+
+  table[data-rt-cards] td[data-rt='title'] .contributor-name,
+  table[data-rt-cards] td[data-rt='title'] .contributor-email,
+  table[data-rt-cards] td[data-rt='title'] small {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  table[data-rt-cards] td[data-rt='title'] .contributor-email {
+    font-size: 0.75rem;
   }
 }

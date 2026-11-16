@@ -82,7 +82,7 @@ const VerifiedStudentsPanel: React.FC = () => {
         <LoadingSpinner />
       ) : (
         <div className="table-container">
-          <table className="table">
+          <table data-card-keys="Status,Total" className="table">
             <thead>
               <tr>
                 <th>Name</th>

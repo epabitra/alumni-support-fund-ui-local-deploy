@@ -482,7 +482,7 @@ const AdminStudents: React.FC = () => {
 
         <div className="table-container">
           <div className="table-wrapper">
-            <table className="table">
+            <table data-card-keys="Status" className="table">
             <thead>
               <tr>
                 <th>Name</th>

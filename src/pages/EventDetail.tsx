@@ -264,7 +264,7 @@ const EventDetail: React.FC = () => {
             <p className="event-empty-line">Nothing spent yet. Bills will appear here when money is spent.</p>
           ) : (
             <div className="table-scroll-wrap">
-              <table className="payment-history-table">
+              <table data-card-keys="Amount" className="payment-history-table">
                 <thead><tr><th>Paid on</th><th>Amount</th><th>For</th>{isAdmin && <th>Recorded by</th>}</tr></thead>
                 <tbody>
                   {event.expenses.map((x) => (
@@ -314,7 +314,7 @@ const EventDetail: React.FC = () => {
             <p className="event-empty-line">No donations yet.</p>
           ) : (
             <div className="table-scroll-wrap">
-              <table className="payment-history-table">
+              <table data-card-keys="Amount" className="payment-history-table">
                 <thead><tr><th>Donor</th><th>Date</th><th>Amount</th>{isAdmin && <th><span className="visually-hidden">Actions</span></th>}</tr></thead>
                 <tbody>
                   {event.donations.map((d, i) => {

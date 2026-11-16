@@ -280,7 +280,7 @@ const AdminSchools: React.FC = () => {
 
         <div className="table-container">
           <div className="table-wrapper">
-            <table className="table">
+            <table data-card-keys="Name,Status" className="table">
             <thead>
               <tr>
                 <th>Code</th>

@@ -224,7 +224,7 @@ const ContributionsTable: React.FC<{ onTotal: (total: number) => void; onChanged
       ) : (
         <>
           <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
-            <table className="payment-history-table">
+            <table data-card-keys="For,Amount" className="payment-history-table">
               <thead>
                 <tr>
                   <th>Contributor</th>
@@ -345,7 +345,7 @@ const EventExpensesTable: React.FC = () => {
       ) : (
         <>
           <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
-            <table className="payment-history-table">
+            <table data-card-keys="Amount" className="payment-history-table">
               <thead>
                 <tr>
                   <th>Event</th>
@@ -442,7 +442,7 @@ const ScholarshipPaymentsTable: React.FC<{ onTotal: (total: number) => void }> =
       ) : (
         <>
           <div className={`table-scroll-wrap dt-table-wrap ${loading ? 'loading' : ''}`}>
-            <table className="payment-history-table">
+            <table data-card-keys="Amount paid" className="payment-history-table">
               <thead>
                 <tr>
                   <SortHeader label="Student" field="student" query={query} onSort={onSort} firstDir="asc" />

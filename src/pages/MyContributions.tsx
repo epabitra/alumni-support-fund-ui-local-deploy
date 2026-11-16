@@ -194,7 +194,7 @@ const MyContributions: React.FC = () => {
           ) : (
             <>
               <div className="table-scroll-wrap">
-                <table className="payment-history-table">
+                <table data-card-keys="For,Amount" className="payment-history-table">
                   <thead>
                     <tr>
                       <th>Date</th>

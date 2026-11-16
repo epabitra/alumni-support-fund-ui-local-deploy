@@ -265,7 +265,7 @@ const PendingVerifications: React.FC = () => {
         </div>
 
         <div className="table-container">
-          <table className="table">
+          <table data-card-keys="Class" className="table">
             <thead>
               <tr>
                 <th>Name</th>
